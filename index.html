@@ -83,17 +83,32 @@
   }
   nav.tabs button:hover { color: var(--ink); }
   nav.tabs button.active { color: var(--ink); border-bottom-color: var(--primary); font-weight: 700; }
-  nav.tabs .nav-group { position: relative; }
-  nav.tabs .nav-dropdown {
-    position: absolute; top: 100%; left: 0; background: #fff;
-    border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 6px 18px rgba(0,0,0,0.1);
-    min-width: 160px; padding: 6px; z-index: 30;
+  nav.tabs button.group-toggle::after { content: ''; }
+  .subnav {
+    display: none;
+    flex-wrap: wrap;
+    gap: 6px;
+    background: #fafafa;
+    padding: 10px 20px;
+    border-bottom: 1px solid var(--line);
+    position: sticky;
+    top: 45px;
+    z-index: 19;
   }
-  nav.tabs .nav-dropdown button {
-    display: block; width: 100%; text-align: left; border-bottom: none; border-radius: 6px; padding: 9px 10px;
+  .subnav.open { display: flex; }
+  .subnav button {
+    border: 1px solid var(--line);
+    background: #fff;
+    color: var(--sub);
+    padding: 7px 14px;
+    border-radius: 20px;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
   }
-  nav.tabs .nav-dropdown button:hover { background: var(--primary-light); }
-  nav.tabs .nav-dropdown button.active { background: var(--primary-light); color: var(--primary-dark); }
+  .subnav button:hover { background: var(--primary-light); }
+  .subnav button.active { background: var(--primary); color: #fff; border-color: var(--primary); }
   main { max-width: 1180px; margin: 0 auto; padding: 22px 20px 80px; }
   section.tab { display: none; }
   section.tab.active { display: block; animation: fade .15s ease; }
@@ -253,6 +268,7 @@
 </div>
 
 <nav class="tabs" id="tabNav"></nav>
+<div class="subnav" id="subNav"></div>
 
 <main id="mainArea"></main>
 
@@ -740,31 +756,32 @@ function renderNav() {
     const items = TABS.filter(t => t.group === g);
     const isGroupActive = items.some(t => t.id === activeTab);
     const isOpen = openGroup === g;
-    return `
-      <div class="nav-group">
-        <button class="${isGroupActive ? 'active' : ''}" onclick="toggleGroup('${g}', event)">${g} ${isOpen ? '▲' : '▼'}</button>
-        <div class="nav-dropdown" style="display:${isOpen ? 'block' : 'none'}">
-          ${items.map(t => `<button class="${t.id === activeTab ? 'active' : ''}" onclick="setTab('${t.id}')">${t.label}</button>`).join('')}
-        </div>
-      </div>
-    `;
+    return `<button class="${isGroupActive || isOpen ? 'active' : ''}" onclick="toggleGroup('${g}')">${g} ${isOpen ? '▲' : '▼'}</button>`;
   }).join('');
   nav.innerHTML = coreHtml + groupHtml;
+  renderSubNav();
 }
-function toggleGroup(g, evt) {
-  if (evt) evt.stopPropagation();
+function renderSubNav() {
+  const sub = document.getElementById('subNav');
+  if (!openGroup) {
+    sub.className = 'subnav';
+    sub.innerHTML = '';
+    return;
+  }
+  const items = TABS.filter(t => t.group === openGroup);
+  sub.className = 'subnav open';
+  sub.innerHTML = items.map(t =>
+    `<button class="${t.id === activeTab ? 'active' : ''}" onclick="setTab('${t.id}')">${t.label}</button>`
+  ).join('');
+}
+function toggleGroup(g) {
   openGroup = (openGroup === g) ? null : g;
   renderNav();
 }
-document.addEventListener('click', (e) => {
-  if (openGroup && !e.target.closest('.nav-group')) {
-    openGroup = null;
-    renderNav();
-  }
-});
 function setTab(id) {
   activeTab = id;
-  openGroup = null;
+  const tab = TABS.find(t => t.id === id);
+  openGroup = (tab && tab.group) ? tab.group : null;
   renderNav();
   document.querySelectorAll('section.tab').forEach(s => s.classList.remove('active'));
   document.getElementById('tab-' + id).classList.add('active');
