@@ -803,7 +803,12 @@ const TABS = [
   { id: 'ideas', label: '아이디어', group: '기록' },
 ];
 const GROUPS = ['재무', '제품개발', '운영', '기록'];
+const ACTIVE_TAB_KEY = 'popoErpActiveTabV1';
 let activeTab = 'dashboard';
+try {
+  const savedTab = localStorage.getItem(ACTIVE_TAB_KEY);
+  if (savedTab && TABS.some(t => t.id === savedTab)) activeTab = savedTab;
+} catch (e) {}
 let openGroup = null;
 
 function renderNav() {
@@ -839,6 +844,7 @@ function toggleGroup(g) {
 }
 function setTab(id) {
   activeTab = id;
+  try { localStorage.setItem(ACTIVE_TAB_KEY, id); } catch (e) {}
   const tab = TABS.find(t => t.id === id);
   openGroup = (tab && tab.group) ? tab.group : null;
   renderNav();
