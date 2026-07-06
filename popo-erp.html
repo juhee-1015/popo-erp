@@ -1,0 +1,1593 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>POPO ERP v1.0</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.js" integrity="sha384-iU8HYtnGQ8Cy4zl7gbNMOhsDTTKX02BTXptVP/vqAWIaTfM7isw76iyZCsjL2eVi" crossorigin="anonymous"></script>
+<style>
+  :root {
+    color-scheme: light;
+    --bg: #f6f7f5;
+    --card: #ffffff;
+    --ink: #1f2a24;
+    --sub: #6b7972;
+    --line: #e4e8e3;
+    --primary: #2f7a5c;
+    --primary-dark: #235f47;
+    --primary-light: #e7f3ec;
+    --accent: #e8862b;
+    --accent-light: #fdf0e3;
+    --danger: #c0392b;
+    --danger-light: #fbeae7;
+    --blue: #2e6da4;
+    --blue-light: #e8f0f8;
+    --radius: 14px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", "Segoe UI", Roboto, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  header.topbar {
+    background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+    color: #fff;
+    padding: 18px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  header.topbar .brand { display: flex; align-items: baseline; gap: 10px; }
+  header.topbar h1 { font-size: 20px; margin: 0; letter-spacing: 0.3px; }
+  header.topbar .tagline { font-size: 12px; opacity: 0.85; }
+  header.topbar .actions { display: flex; gap: 8px; }
+  header.topbar button {
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.35);
+    color: #fff;
+    padding: 7px 12px;
+    border-radius: 8px;
+    font-size: 12.5px;
+    cursor: pointer;
+  }
+  header.topbar button:hover { background: rgba(255,255,255,0.28); }
+  nav.tabs {
+    display: flex;
+    gap: 4px;
+    background: #fff;
+    padding: 0 20px;
+    border-bottom: 1px solid var(--line);
+    overflow-x: auto;
+    position: sticky;
+    top: 0;
+    z-index: 20;
+  }
+  nav.tabs button {
+    border: none;
+    background: transparent;
+    padding: 13px 16px;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--sub);
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    white-space: nowrap;
+  }
+  nav.tabs button.active { color: var(--primary-dark); border-bottom-color: var(--primary); }
+  main { max-width: 1180px; margin: 0 auto; padding: 22px 20px 80px; }
+  section.tab { display: none; }
+  section.tab.active { display: block; animation: fade .15s ease; }
+  @keyframes fade { from{opacity:0} to{opacity:1} }
+
+  h2.tab-title { font-size: 18px; margin: 0 0 4px; }
+  p.tab-desc { color: var(--sub); margin: 0 0 18px; font-size: 13px; }
+
+  /* 고정 열 개수 대신 auto-fit: 사이드바처럼 좁은 컨테이너에서도 숫자가 안 깨짐 */
+  .grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    min-width: 0;
+  }
+  .kpi .label { font-size: 12px; color: var(--sub); margin-bottom: 6px; }
+  .kpi .value { font-size: clamp(15px, 3.4vw, 21px); font-weight: 700; overflow-wrap: anywhere; word-break: keep-all; line-height: 1.25; }
+  .kpi .value.small { font-size: clamp(13px, 2.8vw, 16px); }
+  .kpi .sub { font-size: 11.5px; color: var(--sub); margin-top: 4px; overflow-wrap: anywhere; }
+  .kpi.accent .value { color: var(--accent); }
+  .kpi.primary .value { color: var(--primary-dark); }
+  .kpi.danger .value { color: var(--danger); }
+
+  .section-block { margin-bottom: 22px; }
+  .section-block h3 { font-size: 14.5px; margin: 0 0 10px; display:flex; align-items:center; justify-content: space-between; }
+  .section-block h3 .hint { font-size: 11.5px; color: var(--sub); font-weight: 400; }
+
+  label.field { display: block; font-size: 12px; color: var(--sub); margin-bottom: 4px; }
+  input[type=text], input[type=number], input[type=date], select, textarea {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    font-size: 13px;
+    background: #fff;
+    color: var(--ink);
+    font-family: inherit;
+  }
+  input:focus, select:focus, textarea:focus { outline: 2px solid var(--primary-light); border-color: var(--primary); }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; }
+  .row > div { flex: 1; min-width: 110px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  table th, table td { padding: 8px 10px; border-bottom: 1px solid var(--line); text-align: left; }
+  table th { color: var(--sub); font-weight: 600; font-size: 12px; background: #fafbf9; }
+  table td input { padding: 5px 7px; font-size: 12.5px; }
+  table tr:hover td { background: #fbfcfa; }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--primary); color: #fff; border: none;
+    padding: 9px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;
+  }
+  .btn:hover { background: var(--primary-dark); }
+  .btn.secondary { background: #fff; color: var(--ink); border: 1px solid var(--line); }
+  .btn.secondary:hover { background: #f2f4f1; }
+  .btn.danger { background: var(--danger-light); color: var(--danger); }
+  .btn.danger:hover { background: #f6d9d4; }
+  .btn.sm { padding: 5px 9px; font-size: 12px; }
+
+  .pill { display: inline-block; padding: 2px 9px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+  .pill.green { background: var(--primary-light); color: var(--primary-dark); }
+  .pill.orange { background: var(--accent-light); color: var(--accent); }
+  .pill.blue { background: var(--blue-light); color: var(--blue); }
+  .pill.red { background: var(--danger-light); color: var(--danger); }
+
+  .recipe-card { border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; margin-bottom: 16px; background: #fff; }
+  .recipe-card .recipe-head { display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px; }
+  .recipe-card .recipe-head input[type=text] { font-size: 15px; font-weight: 700; border: none; padding: 2px 0; max-width: 260px; }
+  .flow {
+    display: flex; align-items: stretch; gap: 6px; overflow-x: auto; padding: 6px 2px 12px;
+  }
+  .flow .fstep {
+    min-width: 108px; background: #fafbf9; border: 1px solid var(--line); border-radius: 10px;
+    padding: 8px 9px; text-align: center; flex-shrink: 0;
+  }
+  .flow .fstep .ftitle { font-size: 10.5px; color: var(--sub); margin-bottom: 4px; }
+  .flow .fstep .fval { font-size: 13px; font-weight: 700; }
+  .flow .fstep.auto { background: var(--primary-light); }
+  .flow .fstep.result { background: var(--accent-light); }
+  .flow .arrow { display: flex; align-items: center; color: var(--sub); font-size: 15px; flex-shrink: 0; }
+  .flow .fstep input { width: 78px; text-align: center; font-size: 13px; padding: 4px; }
+
+  .todo-item { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 13px; }
+  .todo-item:last-child { border-bottom: none; }
+  .todo-item .owner { font-size: 11px; color: var(--sub); background: #f2f4f1; padding: 1px 7px; border-radius: 10px; }
+
+  .gantt-row { display: grid; grid-template-columns: 170px 1fr; align-items: center; gap: 10px; padding: 6px 0; }
+  .gantt-row .glabel { font-size: 12.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .gantt-track { position: relative; height: 20px; background: #f2f4f1; border-radius: 6px; }
+  .gantt-bar { position: absolute; top: 2px; height: 16px; border-radius: 5px; background: var(--primary); }
+  .gantt-bar.done { background: var(--sub); opacity: .55; }
+  .gantt-bar .bar-progress { position:absolute; left:0; top:0; bottom:0; background: rgba(255,255,255,0.35); border-radius: 5px 0 0 5px; }
+
+  .empty { text-align: center; color: var(--sub); padding: 30px 10px; font-size: 13px; }
+  .chart-wrap { position: relative; height: 260px; }
+  .muted { color: var(--sub); font-size: 12px; }
+  .footer-note { text-align: center; color: var(--sub); font-size: 11.5px; margin-top: 40px; line-height: 1.7; }
+  .roadmap { display:flex; flex-wrap:wrap; gap:6px; justify-content:center; margin-top: 8px; }
+  .roadmap span { background:#fff; border:1px solid var(--line); border-radius:20px; padding:3px 10px; font-size:11px; color: var(--sub); }
+  .save-indicator { font-size: 11px; color: rgba(255,255,255,0.75); }
+  .share-note { width: 100%; font-size: 10.5px; opacity: .75; text-align: right; }
+  ::placeholder { color: #b6bdb6; }
+
+  .modal-overlay { position: fixed; inset: 0; background: rgba(20,30,25,0.45); display:flex; align-items:center; justify-content:center; z-index: 100; padding: 20px; }
+  .modal-box { background:#fff; border-radius: var(--radius); padding: 18px 20px; max-width: 480px; width:100%; max-height: 70vh; overflow-y:auto; }
+  .modal-head { display:flex; justify-content:space-between; align-items:flex-start; gap:10px; margin-bottom: 12px; }
+  .modal-head h3 { margin:0; font-size:15px; display:flex; flex-direction:column; gap:3px; }
+  .modal-head h3 .hint { font-size:11px; color:var(--sub); font-weight:400; }
+  .history-item { display:flex; justify-content:space-between; align-items:center; padding:9px 0; border-bottom:1px solid var(--line); font-size:12.5px; gap:8px; }
+  .history-item .hlabel { flex:1; }
+  .history-item .htime { color:var(--sub); font-size:11px; }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <h1>📊 POPO ERP v1.0</h1>
+    <span class="tagline">주희 &amp; 은비의 펫푸드 창업 운영 시스템</span>
+  </div>
+  <div class="actions">
+    <span class="save-indicator" id="saveIndicator">저장됨</span>
+    <span class="save-indicator" id="cloudIndicator">☁ 클라우드 미설정</span>
+    <button onclick="openCloudModal()">☁ 클라우드 동기화</button>
+    <button onclick="pushSnapshot('수동 저장')">📌 버전 저장</button>
+    <button onclick="openHistoryModal()">🕒 히스토리</button>
+    <button onclick="exportData()" title="은비님과 공유: 내보내서 카카오톡/이메일로 전달 → 상대방이 가져오기로 불러오면 됩니다">⬇ 내보내기</button>
+    <button onclick="document.getElementById('importFile').click()">⬆ 가져오기</button>
+    <input type="file" id="importFile" accept="application/json" style="display:none" onchange="importData(event)" />
+  </div>
+  <div class="share-note">클라우드 동기화 설정 시 은비님과 데이터 공유 · 미설정 시 JSON 내보내기/가져오기로 주고받기 · 히스토리는 이 브라우저에만 저장됩니다</div>
+</header>
+
+<div id="historyModal" class="modal-overlay" style="display:none">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h3>🕒 버전 히스토리 <span class="hint">이 브라우저 로컬에만 저장 (은비님과 공유되지 않음)</span></h3>
+      <button class="btn secondary sm" onclick="closeHistoryModal()">닫기</button>
+    </div>
+    <div id="historyList"></div>
+  </div>
+</div>
+
+<div id="cloudModal" class="modal-overlay" style="display:none">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h3>☁ 클라우드 동기화 <span class="hint">Google Apps Script Web App URL을 입력하면 은비님과 데이터를 공유할 수 있어요</span></h3>
+      <button class="btn secondary sm" onclick="closeCloudModal()">닫기</button>
+    </div>
+    <div id="cloudModalBody"></div>
+  </div>
+</div>
+
+<nav class="tabs" id="tabNav"></nav>
+
+<main id="mainArea"></main>
+
+<script>
+/* =========================================================
+   POPO ERP v1.0 — 데이터 모델 & 저장
+========================================================= */
+const STORAGE_KEY = 'popoErpV1';
+
+function uid() { return Math.random().toString(36).slice(2, 10); }
+function won(n) {
+  n = Math.round(Number(n) || 0);
+  return n.toLocaleString('ko-KR') + '원';
+}
+function pct(n, digits = 1) {
+  if (!isFinite(n)) return '-';
+  return (Math.round(n * Math.pow(10, digits)) / Math.pow(10, digits)) + '%';
+}
+function todayStr() {
+  const d = new Date();
+  return d.toISOString().slice(0, 10);
+}
+function ymStr(d) { return d.toISOString().slice(0, 7); }
+
+function defaultState() {
+  const today = new Date();
+  const months = [];
+  for (let i = 0; i < 12; i++) {
+    const d = new Date(today.getFullYear(), today.getMonth() + i, 1);
+    months.push({ month: d.toISOString().slice(0, 7), revenue: 0, cogs: 0, fixedCost: 1500000 });
+  }
+  return {
+    goal: { monthlyTarget: 5000000, avgOrderValue: 18000, workDays: 30 },
+    overhead: { monthlyOutputUnits: 500 },
+    recipes: [
+      {
+        id: uid(), name: '닭연어 트릿', overheadEnabled: true,
+        ingredients: [
+          { id: uid(), name: '닭가슴살', weight: 1500, cost: 18000 },
+          { id: uid(), name: '연어', weight: 500, cost: 9000 }
+        ],
+        driedWeight: 620, packageSize: 50, packagingCost: 250, stickerCost: 100, shippingCost: 500,
+        feeRate: 5.8, targetMarginRate: 35, sellingPrice: 9000
+      }
+    ],
+    budget: {
+      entries: [
+        { id: uid(), date: todayStr(), type: 'income', category: '투자금', item: '초기 투자금 (주희+은비)', amount: 10000000 }
+      ]
+    },
+    pnl: { months },
+    schedule: {
+      tasks: timelineSeedTasks()
+    },
+    license: { items: defaultLicenseItems() },
+    recipebook: { entries: [] },
+    palatability: { tests: [] }
+  };
+}
+
+function timelineSeedTasks() {
+  // 8/2 펫푸드 학원 수료 이후 타임라인 (네이버 스마트스토어 주력 + 공유주방 활용 기준)
+  return [
+    { id: uid(), name: '펫푸드 학원 수료', owner: '주희', start: '2026-08-02', end: '2026-08-02', done: false, progress: 0, phase: '준비' },
+    { id: uid(), name: '사료제조업 등록 가능한 공유주방/공유공장 리스트업 및 실사', owner: '', start: '2026-08-03', end: '2026-08-16', done: false, progress: 0, phase: '준비' },
+    { id: uid(), name: 'OEM(위탁생산) 대안 조사 — 플랜B', owner: '', start: '2026-08-03', end: '2026-08-16', done: false, progress: 0, phase: '준비' },
+    { id: uid(), name: '동업계약서 작성 (주희·은비 지분/역할)', owner: '', start: '2026-08-03', end: '2026-08-10', done: false, progress: 0, phase: '준비' },
+    { id: uid(), name: '상호·브랜드명 확정 및 상표 선점 조사', owner: '', start: '2026-08-10', end: '2026-08-20', done: false, progress: 0, phase: '준비' },
+    { id: uid(), name: '공유주방/제조시설 계약', owner: '', start: '2026-08-17', end: '2026-08-31', done: false, progress: 0, phase: '시설' },
+    { id: uid(), name: '사업자등록 (통신판매업 겸용)', owner: '', start: '2026-08-24', end: '2026-08-31', done: false, progress: 0, phase: '인허가' },
+    { id: uid(), name: '레시피 개발 및 1차 기호성 테스트', owner: '', start: '2026-08-17', end: '2026-09-15', done: false, progress: 0, phase: '제품개발' },
+    { id: uid(), name: '사료 성분분석 검사기관 예약·검사 (리드타임 있음, 미리 예약)', owner: '', start: '2026-08-24', end: '2026-09-20', done: false, progress: 0, phase: '인허가' },
+    { id: uid(), name: '사료제조업 등록 신청 (시설 완비 후 현장실사 대응)', owner: '', start: '2026-09-01', end: '2026-09-30', done: false, progress: 0, phase: '인허가' },
+    { id: uid(), name: '사료 성분등록 신청 (제품별)', owner: '', start: '2026-09-15', end: '2026-10-10', done: false, progress: 0, phase: '인허가' },
+    { id: uid(), name: '통신판매업 신고', owner: '', start: '2026-09-20', end: '2026-09-25', done: false, progress: 0, phase: '인허가' },
+    { id: uid(), name: '라벨·패키징 디자인 (사료 표시기준 준수)', owner: '', start: '2026-09-15', end: '2026-10-15', done: false, progress: 0, phase: '브랜딩' },
+    { id: uid(), name: '스마트스토어 셀러 등록 (인허가증 사본 첨부)', owner: '', start: '2026-10-10', end: '2026-10-20', done: false, progress: 0, phase: '판매' },
+    { id: uid(), name: '소프트오픈 (지인 대상 테스트 판매)', owner: '', start: '2026-10-20', end: '2026-10-31', done: false, progress: 0, phase: '판매' },
+    { id: uid(), name: '스마트스토어 정식 오픈', owner: '', start: '2026-11-01', end: '2026-11-01', done: false, progress: 0, phase: '판매' }
+  ];
+}
+
+function defaultLicenseItems() {
+  return [
+    { id: uid(), name: '사업자등록 (통신판매업 겸용)', status: '예정', owner: '', dueDate: '2026-08-31', note: '개인/법인, 동업 형태 결정 후 진행' },
+    { id: uid(), name: '사료제조업 등록', status: '예정', owner: '', dueDate: '2026-09-30', note: '시·도지사 등록. 시설기준: 공장건물·저장시설·전처리시설·분쇄혼합시설·계량시설·포장시설 (배합사료면 배합시설 추가). 일반 공유주방은 대부분 이 기준을 충족하지 못하므로 등록 가능 시설 사전 확인 필수' },
+    { id: uid(), name: '유통전문판매업 신고 (OEM 위탁 시 대안)', status: '검토중', owner: '', dueDate: '', note: '직접 제조가 아니라 위탁생산(OEM)하는 경우의 대안 경로. 공유주방 확보가 어려우면 이 경로도 검토' },
+    { id: uid(), name: '사료 성분등록 (제품별)', status: '예정', owner: '', dueDate: '2026-10-10', note: '제품별 종류·성분·성분량 등록. 성분분석서(공인기관 검사) 필요 — 검사 리드타임 고려해 미리 예약' },
+    { id: uid(), name: '통신판매업 신고', status: '예정', owner: '', dueDate: '2026-09-25', note: '스마트스토어 판매자 정보에 신고번호 입력 필요' },
+    { id: uid(), name: '안전관리책임자 지정', status: '예정', owner: '', dueDate: '', note: '사료제조업 등록 시 지정 필요. 정기 자체품질검사 기록 2년 보관 의무' }
+  ];
+}
+
+function migrateRecipe(r) {
+  // 구버전(원재료 1개짜리) 데이터를 ingredients 배열로 변환
+  if (!Array.isArray(r.ingredients)) {
+    r.ingredients = [{
+      id: uid(),
+      name: r.rawMaterialName || '원재료',
+      weight: Number(r.rawWeight) || 0,
+      cost: Number(r.rawCost) || 0
+    }];
+    delete r.rawMaterialName; delete r.rawWeight; delete r.rawCost;
+  }
+  if (typeof r.overheadEnabled !== 'boolean') r.overheadEnabled = true;
+  return r;
+}
+
+let state = loadState();
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return defaultState();
+    const parsed = JSON.parse(raw);
+    // shallow-merge to survive schema growth
+    const base = defaultState();
+    const merged = Object.assign(base, parsed);
+    merged.recipes = (merged.recipes || []).map(migrateRecipe);
+    if (!merged.overhead) merged.overhead = { monthlyOutputUnits: 500 };
+    if (!merged.license) merged.license = { items: defaultLicenseItems() };
+    if (!merged.recipebook) merged.recipebook = { entries: [] };
+    if (!merged.palatability) merged.palatability = { tests: [] };
+    // 기존 사용자에게 8/2 학원 수료 이후 타임라인을 1회만 추가 (기존 일정은 유지)
+    if (!merged._timelineSeededV1) {
+      merged.schedule = merged.schedule || { tasks: [] };
+      merged.schedule.tasks = (merged.schedule.tasks || []).concat(timelineSeedTasks());
+      merged._timelineSeededV1 = true;
+    }
+    return merged;
+  } catch (e) {
+    console.warn('상태 로드 실패, 기본값 사용', e);
+    return defaultState();
+  }
+}
+
+let saveTimer = null;
+function saveState() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  maybeAutoSnapshot();
+  scheduleCloudPush();
+  const ind = document.getElementById('saveIndicator');
+  if (ind) {
+    ind.textContent = '저장 중…';
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => { ind.textContent = '저장됨 · ' + new Date().toLocaleTimeString('ko-KR'); }, 250);
+  }
+}
+
+function exportData() {
+  const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'popo-erp-backup-' + todayStr() + '.json';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+function importData(evt) {
+  const file = evt.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const parsed = JSON.parse(reader.result);
+      pushSnapshot('가져오기 전 백업');
+      state = Object.assign(defaultState(), parsed);
+      state.recipes = (state.recipes || []).map(migrateRecipe);
+      if (!state.overhead) state.overhead = { monthlyOutputUnits: 500 };
+      saveState();
+      renderAll();
+      alert('데이터를 가져왔습니다.');
+    } catch (e) {
+      alert('파일을 읽을 수 없습니다. JSON 백업 파일인지 확인해주세요.');
+    }
+  };
+  reader.readAsText(file);
+  evt.target.value = '';
+}
+
+/* =========================================================
+   버전 히스토리 (이 브라우저 로컬 전용 — 은비님과 공유되지 않음)
+========================================================= */
+const HISTORY_KEY = 'popoErpHistoryV1';
+const MAX_HISTORY = 20;
+
+function getHistory() {
+  try { return JSON.parse(localStorage.getItem(HISTORY_KEY)) || []; }
+  catch (e) { return []; }
+}
+function setHistory(list) {
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(list.slice(-MAX_HISTORY)));
+}
+function pushSnapshot(label) {
+  const list = getHistory();
+  list.push({ ts: Date.now(), label: label || '자동 저장', data: JSON.parse(JSON.stringify(state)) });
+  setHistory(list);
+  lastAutoSnapshot = Date.now();
+  const modal = document.getElementById('historyModal');
+  if (modal && modal.style.display !== 'none') renderHistoryList();
+}
+let lastAutoSnapshot = 0;
+function maybeAutoSnapshot() {
+  const now = Date.now();
+  if (now - lastAutoSnapshot > 1000 * 60 * 60 * 6) { // 6시간마다 자동 스냅샷
+    pushSnapshot('자동 저장');
+  }
+}
+function openHistoryModal() {
+  document.getElementById('historyModal').style.display = 'flex';
+  renderHistoryList();
+}
+function closeHistoryModal() {
+  document.getElementById('historyModal').style.display = 'none';
+}
+function renderHistoryList() {
+  const wrap = document.getElementById('historyList');
+  const list = getHistory().slice().sort((a, b) => b.ts - a.ts);
+  wrap.innerHTML = list.length ? list.map(h => `
+    <div class="history-item">
+      <div class="hlabel">${escapeHtml(h.label)}<br/><span class="htime">${new Date(h.ts).toLocaleString('ko-KR')}</span></div>
+      <button class="btn secondary sm" onclick="restoreSnapshot(${h.ts})">복원</button>
+      <button class="btn danger sm" onclick="deleteSnapshot(${h.ts})">삭제</button>
+    </div>
+  `).join('') : '<div class="empty">저장된 버전이 없습니다.</div>';
+}
+function restoreSnapshot(ts) {
+  const h = getHistory().find(x => x.ts === ts);
+  if (!h) return;
+  if (!confirm(new Date(ts).toLocaleString('ko-KR') + ' 버전으로 되돌릴까요? 현재 내용은 덮어씌워집니다.')) return;
+  pushSnapshot('복원 전 백업');
+  state = Object.assign(defaultState(), h.data);
+  state.recipes = (state.recipes || []).map(migrateRecipe);
+  if (!state.overhead) state.overhead = { monthlyOutputUnits: 500 };
+  saveState();
+  renderAll();
+  closeHistoryModal();
+}
+function deleteSnapshot(ts) {
+  setHistory(getHistory().filter(x => x.ts !== ts));
+  renderHistoryList();
+}
+
+/* =========================================================
+   클라우드 동기화 (Google Sheets + Apps Script Web App)
+   — Cowork 미리보기 샌드박스는 외부 네트워크가 막혀 있어 여기서는
+     동작하지 않습니다. GitHub Pages 등 실제 배포된 주소에서 열어야
+     작동합니다.
+========================================================= */
+const CLOUD_CONFIG_KEY = 'popoErpCloudConfigV1';
+
+function getCloudConfig() {
+  try { return JSON.parse(localStorage.getItem(CLOUD_CONFIG_KEY)) || { url: '' }; }
+  catch (e) { return { url: '' }; }
+}
+function setCloudConfig(cfg) {
+  localStorage.setItem(CLOUD_CONFIG_KEY, JSON.stringify(cfg));
+}
+function setCloudStatus(text) {
+  const el = document.getElementById('cloudIndicator');
+  if (el) el.textContent = '☁ ' + text;
+}
+
+function openCloudModal() {
+  document.getElementById('cloudModal').style.display = 'flex';
+  renderCloudModal();
+}
+function closeCloudModal() {
+  document.getElementById('cloudModal').style.display = 'none';
+}
+function renderCloudModal() {
+  const cfg = getCloudConfig();
+  const body = document.getElementById('cloudModalBody');
+  body.innerHTML = `
+    <label class="field">Apps Script Web App URL</label>
+    <input type="text" id="cloudUrlInput" value="${escapeHtml(cfg.url)}" placeholder="https://script.google.com/macros/s/.../exec" />
+    <div class="muted" style="margin-top:8px">Google Sheet + Apps Script를 배포한 뒤 나오는 웹 앱 URL을 붙여넣으세요. 이 URL을 아는 사람은 누구나 데이터를 읽고 쓸 수 있으니 주희·은비님만 보관해주세요.</div>
+    <div class="row" style="margin-top:12px">
+      <button class="btn" onclick="saveCloudUrl()">저장</button>
+      <button class="btn secondary" onclick="manualPull()">☁ → 내 화면 (가져오기)</button>
+      <button class="btn secondary" onclick="manualPush()">내 화면 → ☁ (올리기)</button>
+    </div>
+    <div class="muted" style="margin-top:10px" id="cloudModalStatus"></div>
+  `;
+}
+function saveCloudUrl() {
+  const url = document.getElementById('cloudUrlInput').value.trim();
+  setCloudConfig({ url });
+  setCloudStatus(url ? '연결됨 (미동기화)' : '미설정');
+  if (url) startCloudPolling();
+}
+async function manualPull() {
+  const st = document.getElementById('cloudModalStatus');
+  if (st) st.textContent = '가져오는 중...';
+  const ok = await pullFromCloud(true);
+  if (st) st.textContent = ok ? '가져오기 완료' : '가져오기 실패 (URL/네트워크 확인)';
+}
+async function manualPush() {
+  const st = document.getElementById('cloudModalStatus');
+  if (st) st.textContent = '올리는 중...';
+  const ok = await pushToCloud();
+  if (st) st.textContent = ok ? '올리기 완료' : '올리기 실패 (URL/네트워크 확인)';
+}
+
+async function pullFromCloud(force) {
+  const cfg = getCloudConfig();
+  if (!cfg.url) return false;
+  try {
+    const res = await fetch(cfg.url + '?t=' + Date.now());
+    if (!res.ok) throw new Error('bad status');
+    const json = await res.json();
+    if (json && json.data) {
+      pushSnapshot('클라우드 가져오기 전 백업');
+      state = Object.assign(defaultState(), json.data);
+      state.recipes = (state.recipes || []).map(migrateRecipe);
+      if (!state.overhead) state.overhead = { monthlyOutputUnits: 500 };
+      if (!state.license) state.license = { items: defaultLicenseItems() };
+      if (!state.recipebook) state.recipebook = { entries: [] };
+      if (!state.palatability) state.palatability = { tests: [] };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      renderAll();
+      setCloudStatus('동기화됨 · ' + new Date().toLocaleTimeString('ko-KR'));
+    }
+    return true;
+  } catch (e) {
+    console.warn('클라우드 가져오기 실패', e);
+    setCloudStatus('연결 오류');
+    return false;
+  }
+}
+async function pushToCloud() {
+  const cfg = getCloudConfig();
+  if (!cfg.url) return false;
+  try {
+    const res = await fetch(cfg.url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'save', data: state })
+    });
+    if (!res.ok) throw new Error('bad status');
+    setCloudStatus('동기화됨 · ' + new Date().toLocaleTimeString('ko-KR'));
+    return true;
+  } catch (e) {
+    console.warn('클라우드 올리기 실패', e);
+    setCloudStatus('연결 오류');
+    return false;
+  }
+}
+
+let cloudPushTimer = null;
+function scheduleCloudPush() {
+  const cfg = getCloudConfig();
+  if (!cfg.url) return;
+  clearTimeout(cloudPushTimer);
+  cloudPushTimer = setTimeout(() => { pushToCloud(); }, 3000);
+}
+let cloudPollTimer = null;
+function startCloudPolling() {
+  clearInterval(cloudPollTimer);
+  cloudPollTimer = setInterval(() => {
+    if (document.visibilityState === 'visible') pullFromCloud();
+  }, 45000);
+}
+
+/* =========================================================
+   계산 로직
+========================================================= */
+function overheadPerUnit() {
+  const fixedCost = Number(currentMonthPnl().fixedCost) || 0;
+  const units = Number(state.overhead.monthlyOutputUnits) || 0;
+  return units > 0 ? fixedCost / units : 0;
+}
+
+function recipeCalc(r) {
+  const ingredients = r.ingredients || [];
+  const totalRawWeight = ingredients.reduce((a, i) => a + (Number(i.weight) || 0), 0);
+  const totalRawCost = ingredients.reduce((a, i) => a + (Number(i.cost) || 0), 0);
+  const yieldRate = totalRawWeight > 0 ? (r.driedWeight / totalRawWeight) * 100 : 0;
+  const numPackages = r.packageSize > 0 ? Math.max(r.driedWeight / r.packageSize, 0) : 0;
+  const ingredientCostPerUnit = numPackages > 0 ? totalRawCost / numPackages : 0;
+  const overheadUnit = r.overheadEnabled ? overheadPerUnit() : 0;
+  const variableCostExFee = ingredientCostPerUnit + Number(r.packagingCost || 0) + Number(r.stickerCost || 0) + Number(r.shippingCost || 0) + overheadUnit;
+  const feeAmount = (Number(r.sellingPrice || 0) * Number(r.feeRate || 0)) / 100;
+  const totalCostPerUnit = variableCostExFee + feeAmount;
+  const profitPerUnit = Number(r.sellingPrice || 0) - totalCostPerUnit;
+  const costRatio = r.sellingPrice > 0 ? (totalCostPerUnit / r.sellingPrice) * 100 : 0;
+  const denom = 1 - (Number(r.feeRate || 0) / 100) - (Number(r.targetMarginRate || 0) / 100);
+  const recommendedPrice = denom > 0 ? variableCostExFee / denom : NaN;
+  return { totalRawWeight, totalRawCost, yieldRate, numPackages, ingredientCostPerUnit, overheadUnit, variableCostExFee, feeAmount, totalCostPerUnit, profitPerUnit, costRatio, recommendedPrice };
+}
+
+function budgetTotals() {
+  let income = 0, expense = 0, investment = 0;
+  const byCategory = {};
+  state.budget.entries.forEach(e => {
+    const amt = Number(e.amount) || 0;
+    if (e.type === 'income') {
+      income += amt;
+      if (e.category === '투자금') investment += amt;
+    } else {
+      expense += amt;
+      byCategory[e.category] = (byCategory[e.category] || 0) + amt;
+    }
+  });
+  return { income, expense, balance: income - expense, investment, byCategory };
+}
+
+function currentMonthPnl() {
+  const cur = new Date().toISOString().slice(0, 7);
+  return state.pnl.months.find(m => m.month === cur) || state.pnl.months[0];
+}
+
+function avgVariableCostRate() {
+  const ratios = state.recipes.filter(r => r.sellingPrice > 0).map(r => recipeCalc(r).costRatio / 100);
+  if (ratios.length === 0) return 0.6;
+  return ratios.reduce((a, b) => a + b, 0) / ratios.length;
+}
+
+function bepCalc(fixedCost) {
+  const varRate = avgVariableCostRate();
+  const cmRate = 1 - varRate;
+  if (cmRate <= 0) return { revenue: Infinity, units: Infinity, cmRate };
+  const revenue = fixedCost / cmRate;
+  const aov = state.goal.avgOrderValue || 1;
+  const units = revenue / aov;
+  return { revenue, units, cmRate };
+}
+
+function weekRange() {
+  const now = new Date();
+  const day = now.getDay(); // 0 Sun .. 6 Sat
+  const diffToMon = (day === 0 ? -6 : 1 - day);
+  const mon = new Date(now); mon.setDate(now.getDate() + diffToMon); mon.setHours(0,0,0,0);
+  const sun = new Date(mon); sun.setDate(mon.getDate() + 6); sun.setHours(23,59,59,999);
+  return { start: mon, end: sun };
+}
+
+/* =========================================================
+   탭 네비게이션
+========================================================= */
+const TABS = [
+  { id: 'dashboard', label: '대시보드' },
+  { id: 'schedule', label: '창업일정' },
+  { id: 'license', label: '인허가체크리스트' },
+  { id: 'recipebook', label: '레시피 저장소' },
+  { id: 'palatability', label: '기호성테스트' },
+  { id: 'cost', label: '원가계산기' },
+  { id: 'price', label: '가격결정' },
+  { id: 'budget', label: '예산' },
+  { id: 'pnl', label: '손익' },
+];
+let activeTab = 'dashboard';
+
+function renderNav() {
+  const nav = document.getElementById('tabNav');
+  nav.innerHTML = TABS.map(t =>
+    `<button class="${t.id === activeTab ? 'active' : ''}" onclick="setTab('${t.id}')">${t.label}</button>`
+  ).join('');
+}
+function setTab(id) {
+  activeTab = id;
+  renderNav();
+  document.querySelectorAll('section.tab').forEach(s => s.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  if (id === 'dashboard') renderDashboardCharts();
+  if (id === 'budget') renderBudgetChart();
+  if (id === 'pnl') renderPnlChart();
+}
+
+function renderAll() {
+  renderNav();
+  document.getElementById('mainArea').innerHTML = TABS.map(t => `<section class="tab" id="tab-${t.id}"></section>`).join('');
+  renderDashboard();
+  renderCost();
+  renderPrice();
+  renderBudget();
+  renderPnl();
+  renderSchedule();
+  renderLicense();
+  renderRecipebook();
+  renderPalatability();
+  setTab(activeTab);
+}
+
+/* =========================================================
+   00. 대시보드
+========================================================= */
+let revenueChart, budgetChart, pnlChart;
+
+function renderDashboard() {
+  const g = state.goal;
+  const dailyTarget = g.workDays > 0 ? g.monthlyTarget / g.workDays : 0;
+  const neededOrdersPerDay = g.avgOrderValue > 0 ? Math.ceil(dailyTarget / g.avgOrderValue) : 0;
+  const neededUnitsPerMonth = g.avgOrderValue > 0 ? Math.ceil(g.monthlyTarget / g.avgOrderValue) : 0;
+
+  const cur = currentMonthPnl();
+  const achievement = g.monthlyTarget > 0 ? (cur.revenue / g.monthlyTarget) * 100 : 0;
+  const profit = cur.revenue - cur.cogs - cur.fixedCost;
+  const bTotals = budgetTotals();
+  const bep = bepCalc(cur.fixedCost || 0);
+
+  const wk = weekRange();
+  const weekTasks = state.schedule.tasks.filter(t => {
+    const s = new Date(t.start), e = new Date(t.end || t.start);
+    return !t.done && e >= wk.start && s <= wk.end;
+  });
+  const totalTasks = state.schedule.tasks.length;
+  const doneTasks = state.schedule.tasks.filter(t => t.done).length;
+  const overallProgress = totalTasks ? (state.schedule.tasks.reduce((a, t) => a + (t.done ? 100 : Number(t.progress || 0)), 0) / totalTasks) : 0;
+
+  const el = document.getElementById('tab-dashboard');
+  el.innerHTML = `
+    <h2 class="tab-title">대시보드</h2>
+    <p class="tab-desc">POPO 창업 현황을 한눈에. 목표만 입력하면 나머지는 전부 자동 계산됩니다.</p>
+
+    <div class="section-block">
+      <h3>🎯 목표 설정 <span class="hint">입력하면 아래 전부 자동 계산</span></h3>
+      <div class="card">
+        <div class="row">
+          <div>
+            <label class="field">월 매출 목표 (원)</label>
+            <input type="number" id="g_monthlyTarget" value="${g.monthlyTarget}" oninput="updateGoal()" />
+          </div>
+          <div>
+            <label class="field">객단가 (평균 판매가, 원)</label>
+            <input type="number" id="g_avgOrderValue" value="${g.avgOrderValue}" oninput="updateGoal()" />
+          </div>
+          <div>
+            <label class="field">월 영업일수</label>
+            <input type="number" id="g_workDays" value="${g.workDays}" oninput="updateGoal()" />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid cols-4 section-block">
+      <div class="card kpi primary">
+        <div class="label">하루 필요 매출</div>
+        <div class="value">${won(dailyTarget)}</div>
+      </div>
+      <div class="card kpi accent">
+        <div class="label">하루 필요 주문건수</div>
+        <div class="value">${neededOrdersPerDay}건</div>
+      </div>
+      <div class="card kpi">
+        <div class="label">월 필요 판매량</div>
+        <div class="value">${neededUnitsPerMonth}개</div>
+      </div>
+      <div class="card kpi">
+        <div class="label">목표 달성률 (이번달)</div>
+        <div class="value">${pct(achievement)}</div>
+        <div class="sub">${won(cur.revenue)} / ${won(g.monthlyTarget)}</div>
+      </div>
+    </div>
+
+    <div class="grid cols-4 section-block">
+      <div class="card kpi">
+        <div class="label">이번달 순이익(추정)</div>
+        <div class="value ${profit < 0 ? 'kpi-neg' : ''}" style="color:${profit < 0 ? 'var(--danger)' : 'var(--primary-dark)'}">${won(profit)}</div>
+        <div class="sub">매출-원가-고정비 (손익 탭 기준)</div>
+      </div>
+      <div class="card kpi">
+        <div class="label">손익분기점(BEP)</div>
+        <div class="value small">${isFinite(bep.revenue) ? won(bep.revenue) : '계산불가'}</div>
+        <div class="sub">약 ${isFinite(bep.units) ? Math.ceil(bep.units) : '-'}개 판매 시</div>
+      </div>
+      <div class="card kpi">
+        <div class="label">총 투자금</div>
+        <div class="value small">${won(bTotals.investment)}</div>
+      </div>
+      <div class="card kpi">
+        <div class="label">현재 잔액</div>
+        <div class="value small" style="color:${bTotals.balance < 0 ? 'var(--danger)' : 'var(--primary-dark)'}">${won(bTotals.balance)}</div>
+      </div>
+    </div>
+
+    <div class="grid cols-2 section-block">
+      <div class="card">
+        <h3 style="margin-top:0">📌 이번주 TO DO <span class="pill blue">${weekTasks.length}건</span></h3>
+        ${weekTasks.length ? weekTasks.map(t => `
+          <div class="todo-item">
+            <input type="checkbox" onchange="toggleTaskDone('${t.id}')" />
+            <span style="flex:1">${escapeHtml(t.name)}</span>
+            <span class="owner">${escapeHtml(t.owner || '-')}</span>
+          </div>
+        `).join('') : '<div class="empty">이번주 예정된 작업이 없습니다. 창업일정 탭에서 추가해보세요.</div>'}
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0">🚀 전체 진행률 <span class="pill green">${doneTasks}/${totalTasks} 완료</span></h3>
+        <div style="height:14px;background:#f2f4f1;border-radius:8px;overflow:hidden;margin:10px 0">
+          <div style="height:100%;width:${Math.min(overallProgress,100)}%;background:var(--primary);"></div>
+        </div>
+        <div class="sub">전체 작업 진행률 ${pct(overallProgress)}</div>
+      </div>
+    </div>
+
+    <div class="card section-block">
+      <h3 style="margin-top:0">📈 월별 매출 추이 (목표 대비)</h3>
+      <div class="chart-wrap"><canvas id="revenueChartCanvas"></canvas></div>
+    </div>
+
+    <div class="footer-note">
+      <div>다음 업데이트 예정 모듈</div>
+      <div class="roadmap">
+        <span>사업계획서</span><span>인허가</span><span>공유제조시설</span><span>제품개발</span>
+        <span>스마트스토어</span><span>브랜딩</span><span>마케팅</span><span>거래처</span>
+        <span>재고</span><span>유통기한</span><span>회의록</span><span>아이디어</span>
+        <span>정부지원사업</span><span>세금</span><span>KPI 종합</span>
+      </div>
+    </div>
+  `;
+}
+
+function updateGoal() {
+  state.goal.monthlyTarget = Number(document.getElementById('g_monthlyTarget').value) || 0;
+  state.goal.avgOrderValue = Number(document.getElementById('g_avgOrderValue').value) || 0;
+  state.goal.workDays = Number(document.getElementById('g_workDays').value) || 30;
+  saveState();
+  renderDashboard();
+  renderDashboardCharts();
+}
+
+function toggleTaskDone(id) {
+  const t = state.schedule.tasks.find(x => x.id === id);
+  if (t) { t.done = !t.done; if (t.done) t.progress = 100; }
+  saveState();
+  renderDashboard();
+  renderSchedule();
+}
+
+function renderDashboardCharts() {
+  const canvas = document.getElementById('revenueChartCanvas');
+  if (!canvas || typeof Chart === 'undefined') return;
+  const months = state.pnl.months;
+  const labels = months.map(m => m.month);
+  const revenue = months.map(m => m.revenue);
+  const target = months.map(() => state.goal.monthlyTarget);
+  if (revenueChart) revenueChart.destroy();
+  revenueChart = new Chart(canvas.getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label: '실제 매출', data: revenue, backgroundColor: '#2f7a5c' },
+        { label: '목표', data: target, type: 'line', borderColor: '#e8862b', borderDash: [5,4], pointRadius: 0, borderWidth: 2, fill: false }
+      ]
+    },
+    options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
+  });
+}
+
+function escapeHtml(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+/* =========================================================
+   06. 원가계산기 (핵심 기능)
+========================================================= */
+function renderCost() {
+  const el = document.getElementById('tab-cost');
+  const perUnit = overheadPerUnit();
+  el.innerHTML = `
+    <h2 class="tab-title">원가계산기 ⭐⭐⭐⭐⭐</h2>
+    <p class="tab-desc">원재료는 여러 개 섞어도 되고, 인건비·수도전기 같은 간접비도 자동으로 개당 원가에 배분됩니다.</p>
+
+    <div class="card section-block">
+      <h3 style="margin-top:0">🏭 간접비 배분 설정 <span class="hint">인건비·수도전기·임대료 등</span></h3>
+      <div class="row">
+        <div>
+          <label class="field">월 고정비 (손익 탭 이번달 값 연동)</label>
+          <input type="text" value="${won(Number(currentMonthPnl().fixedCost) || 0)}" disabled style="background:#f2f4f1;color:var(--sub)" />
+        </div>
+        <div>
+          <label class="field">월 예상 총 생산량 (개)</label>
+          <input type="number" value="${state.overhead.monthlyOutputUnits}" oninput="updateOverhead(this.value)" />
+        </div>
+        <div>
+          <label class="field">개당 간접비 배분 (자동)</label>
+          <input type="text" value="${won(perUnit)}" disabled style="background:var(--primary-light);color:var(--primary-dark);font-weight:700" />
+        </div>
+      </div>
+      <div class="muted" style="margin-top:8px">고정비는 손익 탭의 '이번달 고정비' 값을 그대로 가져옵니다. 레시피마다 이 간접비를 원가에 포함할지 선택할 수 있어요.</div>
+    </div>
+
+    <div id="recipeList"></div>
+    <button class="btn" onclick="addRecipe()">+ 새 레시피 추가</button>
+  `;
+  renderRecipeList();
+}
+function updateOverhead(value) {
+  state.overhead.monthlyOutputUnits = Number(value) || 0;
+  saveState();
+  renderCost();
+  if (activeTab === 'price') renderPrice();
+}
+
+function renderRecipeList() {
+  const wrap = document.getElementById('recipeList');
+  if (!state.recipes.length) {
+    wrap.innerHTML = '<div class="empty">아직 레시피가 없습니다. [새 레시피 추가]로 시작하세요.</div>';
+    return;
+  }
+  wrap.innerHTML = state.recipes.map(r => {
+    const c = recipeCalc(r);
+    const ingRows = (r.ingredients || []).map(ing => `
+      <tr>
+        <td><input type="text" value="${escapeHtml(ing.name)}" oninput="updateIngredient('${r.id}','${ing.id}','name',this.value)" placeholder="예: 닭가슴살" /></td>
+        <td><input type="number" value="${ing.weight}" style="width:90px" oninput="updateIngredient('${r.id}','${ing.id}','weight',this.value)" /></td>
+        <td><input type="number" value="${ing.cost}" style="width:100px" oninput="updateIngredient('${r.id}','${ing.id}','cost',this.value)" /></td>
+        <td><button class="btn danger sm" onclick="removeIngredient('${r.id}','${ing.id}')">삭제</button></td>
+      </tr>
+    `).join('');
+    return `
+    <div class="recipe-card">
+      <div class="recipe-head">
+        <input type="text" value="${escapeHtml(r.name)}" oninput="updateRecipe('${r.id}','name',this.value)" />
+        <button class="btn danger sm" onclick="deleteRecipe('${r.id}')">삭제</button>
+      </div>
+
+      <div class="section-block">
+        <h3 style="margin-bottom:6px">🥩 원재료 (여러 개 조합 가능) <span class="hint">합계 ${c.totalRawWeight}g · ${won(c.totalRawCost)}</span></h3>
+        <table>
+          <thead><tr><th>원재료명</th><th>무게(g)</th><th>재료비(원)</th><th></th></tr></thead>
+          <tbody>${ingRows || '<tr><td colspan="4" class="empty">원재료를 추가하세요.</td></tr>'}</tbody>
+        </table>
+        <button class="btn secondary sm" style="margin-top:8px" onclick="addIngredient('${r.id}')">+ 원재료 추가</button>
+      </div>
+
+      <div class="flow">
+        <div class="fstep auto">
+          <div class="ftitle">원재료 합계 무게</div>
+          <div class="fval">${c.totalRawWeight}g</div>
+        </div>
+        <div class="arrow">→</div>
+        <div class="fstep">
+          <div class="ftitle">건조 후 무게(g)</div>
+          <input type="number" value="${r.driedWeight}" oninput="updateRecipe('${r.id}','driedWeight',this.value)" />
+        </div>
+        <div class="arrow">→</div>
+        <div class="fstep auto">
+          <div class="ftitle">자동 수율</div>
+          <div class="fval">${pct(c.yieldRate)}</div>
+        </div>
+        <div class="arrow">→</div>
+        <div class="fstep">
+          <div class="ftitle">1개당 용량(g)</div>
+          <input type="number" value="${r.packageSize}" oninput="updateRecipe('${r.id}','packageSize',this.value)" />
+        </div>
+        <div class="arrow">→</div>
+        <div class="fstep auto">
+          <div class="ftitle">생산 개수</div>
+          <div class="fval">${c.numPackages.toFixed(1)}개</div>
+        </div>
+      </div>
+      <div class="flow">
+        <div class="fstep auto">
+          <div class="ftitle">개당 재료비</div>
+          <div class="fval">${won(c.ingredientCostPerUnit)}</div>
+        </div>
+        <div class="arrow">→</div>
+        <div class="fstep">
+          <div class="ftitle">포장비(원)</div>
+          <input type="number" value="${r.packagingCost}" oninput="updateRecipe('${r.id}','packagingCost',this.value)" />
+        </div>
+        <div class="arrow">→</div>
+        <div class="fstep">
+          <div class="ftitle">스티커(원)</div>
+          <input type="number" value="${r.stickerCost}" oninput="updateRecipe('${r.id}','stickerCost',this.value)" />
+        </div>
+        <div class="arrow">→</div>
+        <div class="fstep">
+          <div class="ftitle">택배비(원)</div>
+          <input type="number" value="${r.shippingCost}" oninput="updateRecipe('${r.id}','shippingCost',this.value)" />
+        </div>
+        <div class="arrow">→</div>
+        <div class="fstep auto">
+          <div class="ftitle">간접비(개당)</div>
+          <div class="fval">${r.overheadEnabled ? won(c.overheadUnit) : '미포함'}</div>
+        </div>
+        <div class="arrow">→</div>
+        <div class="fstep">
+          <div class="ftitle">수수료(%)</div>
+          <input type="number" value="${r.feeRate}" step="0.1" oninput="updateRecipe('${r.id}','feeRate',this.value)" />
+        </div>
+        <div class="arrow">→</div>
+        <div class="fstep">
+          <div class="ftitle">판매가(원)</div>
+          <input type="number" value="${r.sellingPrice}" oninput="updateRecipe('${r.id}','sellingPrice',this.value)" />
+        </div>
+        <div class="arrow">→</div>
+        <div class="fstep result">
+          <div class="ftitle">개당 순이익</div>
+          <div class="fval" style="color:${c.profitPerUnit < 0 ? 'var(--danger)' : 'var(--primary-dark)'}">${won(c.profitPerUnit)}</div>
+        </div>
+        <div class="arrow">→</div>
+        <div class="fstep result">
+          <div class="ftitle">원가율</div>
+          <div class="fval">${pct(c.costRatio)}</div>
+        </div>
+      </div>
+
+      <label style="display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--sub);margin:4px 0 10px">
+        <input type="checkbox" style="width:auto" ${r.overheadEnabled ? 'checked' : ''} onchange="updateRecipe('${r.id}','overheadEnabled',this.checked)" />
+        간접비(인건비·수도전기·임대료 배분분) 원가에 포함
+      </label>
+
+      <div class="row" style="margin-top:6px">
+        <div>
+          <label class="field">목표 마진율(%) — 권장 판매가 계산용</label>
+          <input type="number" value="${r.targetMarginRate}" oninput="updateRecipe('${r.id}','targetMarginRate',this.value)" />
+        </div>
+        <div class="card" style="background:var(--primary-light);border:none;flex:1">
+          <div class="label" style="color:var(--primary-dark)">💡 권장 판매가 (자동)</div>
+          <div class="value" style="color:var(--primary-dark)">${isFinite(c.recommendedPrice) ? won(c.recommendedPrice) : '수수료+마진율 조정 필요'}</div>
+        </div>
+      </div>
+    </div>
+    `;
+  }).join('');
+}
+
+function addRecipe() {
+  state.recipes.push({
+    id: uid(), name: '새 레시피', overheadEnabled: true,
+    ingredients: [{ id: uid(), name: '', weight: 1000, cost: 0 }],
+    driedWeight: 300, packageSize: 50, packagingCost: 200, stickerCost: 100, shippingCost: 500,
+    feeRate: 5.8, targetMarginRate: 35, sellingPrice: 0
+  });
+  saveState();
+  renderCost();
+}
+function deleteRecipe(id) {
+  if (!confirm('이 레시피를 삭제할까요?')) return;
+  state.recipes = state.recipes.filter(r => r.id !== id);
+  saveState();
+  renderCost();
+  renderPrice();
+}
+function updateRecipe(id, field, value) {
+  const r = state.recipes.find(x => x.id === id);
+  if (!r) return;
+  const numericFields = ['driedWeight','packageSize','packagingCost','stickerCost','shippingCost','feeRate','targetMarginRate','sellingPrice'];
+  if (field === 'overheadEnabled') r[field] = Boolean(value);
+  else r[field] = numericFields.includes(field) ? Number(value) || 0 : value;
+  saveState();
+  renderRecipeList();
+  if (activeTab === 'price') renderPrice();
+  if (activeTab === 'dashboard') renderDashboard();
+}
+function addIngredient(recipeId) {
+  const r = state.recipes.find(x => x.id === recipeId);
+  if (!r) return;
+  r.ingredients.push({ id: uid(), name: '', weight: 0, cost: 0 });
+  saveState();
+  renderRecipeList();
+}
+function removeIngredient(recipeId, ingId) {
+  const r = state.recipes.find(x => x.id === recipeId);
+  if (!r) return;
+  r.ingredients = r.ingredients.filter(i => i.id !== ingId);
+  saveState();
+  renderRecipeList();
+  if (activeTab === 'price') renderPrice();
+}
+function updateIngredient(recipeId, ingId, field, value) {
+  const r = state.recipes.find(x => x.id === recipeId);
+  if (!r) return;
+  const ing = r.ingredients.find(i => i.id === ingId);
+  if (!ing) return;
+  ing[field] = (field === 'weight' || field === 'cost') ? (Number(value) || 0) : value;
+  saveState();
+  renderRecipeList();
+  if (activeTab === 'price') renderPrice();
+  if (activeTab === 'dashboard') renderDashboard();
+}
+
+/* =========================================================
+   07. 가격결정
+========================================================= */
+function renderPrice() {
+  const el = document.getElementById('tab-price');
+  const rows = state.recipes.map(r => {
+    const c = recipeCalc(r);
+    return `
+      <tr>
+        <td>${escapeHtml(r.name)}</td>
+        <td>${won(c.variableCostExFee)}</td>
+        <td><input type="number" value="${r.sellingPrice}" style="width:90px" oninput="updateRecipe('${r.id}','sellingPrice',this.value)" /></td>
+        <td style="color:${c.profitPerUnit < 0 ? 'var(--danger)' : 'inherit'}">${won(c.profitPerUnit)}</td>
+        <td>${r.sellingPrice > 0 ? pct((c.profitPerUnit / r.sellingPrice) * 100) : '-'}</td>
+        <td>${pct(c.costRatio)}</td>
+        <td>${isFinite(c.recommendedPrice) ? won(c.recommendedPrice) : '-'}</td>
+      </tr>
+    `;
+  }).join('');
+  el.innerHTML = `
+    <h2 class="tab-title">가격결정</h2>
+    <p class="tab-desc">판매가를 입력하면 마진 · 마진율 · 원가율이 실시간으로 자동 계산됩니다. (원가계산기와 데이터 연동)</p>
+    <div class="card">
+      <table>
+        <thead><tr><th>제품명</th><th>변동원가(수수료 제외)</th><th>판매가</th><th>개당 순이익</th><th>마진율</th><th>원가율</th><th>권장 판매가</th></tr></thead>
+        <tbody>${rows || '<tr><td colspan="7" class="empty">원가계산기에서 레시피를 먼저 추가하세요.</td></tr>'}</tbody>
+      </table>
+    </div>
+  `;
+}
+
+/* =========================================================
+   08. 예산
+========================================================= */
+function renderBudget() {
+  const el = document.getElementById('tab-budget');
+  const t = budgetTotals();
+  const rows = state.budget.entries.slice().sort((a,b) => b.date.localeCompare(a.date)).map(e => `
+    <tr>
+      <td><input type="date" value="${e.date}" oninput="updateBudgetEntry('${e.id}','date',this.value)" /></td>
+      <td>
+        <select onchange="updateBudgetEntry('${e.id}','type',this.value)">
+          <option value="income" ${e.type==='income'?'selected':''}>수입</option>
+          <option value="expense" ${e.type==='expense'?'selected':''}>지출</option>
+        </select>
+      </td>
+      <td><input type="text" value="${escapeHtml(e.category)}" oninput="updateBudgetEntry('${e.id}','category',this.value)" placeholder="투자금/재료비/마케팅비 등" /></td>
+      <td><input type="text" value="${escapeHtml(e.item)}" oninput="updateBudgetEntry('${e.id}','item',this.value)" /></td>
+      <td><input type="number" value="${e.amount}" style="width:100px" oninput="updateBudgetEntry('${e.id}','amount',this.value)" /></td>
+      <td><button class="btn danger sm" onclick="deleteBudgetEntry('${e.id}')">삭제</button></td>
+    </tr>
+  `).join('');
+  el.innerHTML = `
+    <h2 class="tab-title">예산</h2>
+    <p class="tab-desc">투자금과 지출을 기록하면 잔액과 카테고리별 지출이 자동 집계됩니다.</p>
+    <div class="grid cols-3 section-block">
+      <div class="card kpi primary"><div class="label">총 투자금</div><div class="value">${won(t.investment)}</div></div>
+      <div class="card kpi"><div class="label">총 지출</div><div class="value">${won(t.expense)}</div></div>
+      <div class="card kpi ${t.balance<0?'danger':''}"><div class="label">현재 잔액</div><div class="value" style="color:${t.balance<0?'var(--danger)':'var(--primary-dark)'}">${won(t.balance)}</div></div>
+    </div>
+    <div class="card section-block">
+      <h3 style="margin-top:0">카테고리별 지출</h3>
+      <div class="chart-wrap" style="height:220px"><canvas id="budgetChartCanvas"></canvas></div>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">거래 내역</h3>
+      <table>
+        <thead><tr><th>날짜</th><th>구분</th><th>카테고리</th><th>항목</th><th>금액</th><th></th></tr></thead>
+        <tbody>${rows || '<tr><td colspan="6" class="empty">거래 내역이 없습니다.</td></tr>'}</tbody>
+      </table>
+      <button class="btn" style="margin-top:10px" onclick="addBudgetEntry()">+ 거래 추가</button>
+    </div>
+  `;
+}
+function addBudgetEntry() {
+  state.budget.entries.push({ id: uid(), date: todayStr(), type: 'expense', category: '', item: '', amount: 0 });
+  saveState();
+  renderBudget();
+  renderBudgetChart();
+}
+function deleteBudgetEntry(id) {
+  state.budget.entries = state.budget.entries.filter(e => e.id !== id);
+  saveState();
+  renderBudget();
+  renderBudgetChart();
+}
+function updateBudgetEntry(id, field, value) {
+  const e = state.budget.entries.find(x => x.id === id);
+  if (!e) return;
+  e[field] = field === 'amount' ? (Number(value) || 0) : value;
+  saveState();
+  if (field !== 'amount' && field !== 'category') return;
+  renderBudget();
+  renderBudgetChart();
+}
+function renderBudgetChart() {
+  const canvas = document.getElementById('budgetChartCanvas');
+  if (!canvas || typeof Chart === 'undefined') return;
+  const t = budgetTotals();
+  const labels = Object.keys(t.byCategory);
+  const data = Object.values(t.byCategory);
+  if (budgetChart) budgetChart.destroy();
+  if (!labels.length) return;
+  budgetChart = new Chart(canvas.getContext('2d'), {
+    type: 'doughnut',
+    data: { labels, datasets: [{ data, backgroundColor: ['#2f7a5c','#e8862b','#2e6da4','#c0392b','#8e6bb0','#c9a227','#5aa8a0'] }] },
+    options: { responsive: true, maintainAspectRatio: false }
+  });
+}
+
+/* =========================================================
+   09. 손익 (12개월)
+========================================================= */
+function renderPnl() {
+  const el = document.getElementById('tab-pnl');
+  const rows = state.pnl.months.map((m, idx) => {
+    const profit = m.revenue - m.cogs - m.fixedCost;
+    const margin = m.revenue > 0 ? (profit / m.revenue) * 100 : 0;
+    return `
+      <tr>
+        <td>${m.month}</td>
+        <td><input type="number" value="${m.revenue}" style="width:100px" oninput="updatePnl(${idx},'revenue',this.value)" /></td>
+        <td><input type="number" value="${m.cogs}" style="width:100px" oninput="updatePnl(${idx},'cogs',this.value)" /></td>
+        <td><input type="number" value="${m.fixedCost}" style="width:100px" oninput="updatePnl(${idx},'fixedCost',this.value)" /></td>
+        <td style="color:${profit<0?'var(--danger)':'inherit'};font-weight:600">${won(profit)}</td>
+        <td>${pct(margin)}</td>
+      </tr>
+    `;
+  }).join('');
+  const totalRevenue = state.pnl.months.reduce((a,m) => a + Number(m.revenue||0), 0);
+  const totalProfit = state.pnl.months.reduce((a,m) => a + (Number(m.revenue||0) - Number(m.cogs||0) - Number(m.fixedCost||0)), 0);
+  el.innerHTML = `
+    <h2 class="tab-title">손익 (12개월)</h2>
+    <p class="tab-desc">월별 매출/매출원가/고정비만 입력하면 순이익과 마진율이 자동 계산됩니다.</p>
+    <div class="grid cols-2 section-block">
+      <div class="card kpi primary"><div class="label">12개월 누적 매출</div><div class="value">${won(totalRevenue)}</div></div>
+      <div class="card kpi"><div class="label">12개월 누적 순이익</div><div class="value" style="color:${totalProfit<0?'var(--danger)':'var(--primary-dark)'}">${won(totalProfit)}</div></div>
+    </div>
+    <div class="card section-block">
+      <div class="chart-wrap"><canvas id="pnlChartCanvas"></canvas></div>
+    </div>
+    <div class="card">
+      <table>
+        <thead><tr><th>월</th><th>매출</th><th>매출원가</th><th>고정비</th><th>순이익</th><th>마진율</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+  `;
+}
+function updatePnl(idx, field, value) {
+  state.pnl.months[idx][field] = Number(value) || 0;
+  saveState();
+  renderPnl();
+  renderPnlChart();
+  if (activeTab === 'dashboard') renderDashboard();
+}
+function renderPnlChart() {
+  const canvas = document.getElementById('pnlChartCanvas');
+  if (!canvas || typeof Chart === 'undefined') return;
+  const labels = state.pnl.months.map(m => m.month);
+  const revenue = state.pnl.months.map(m => m.revenue);
+  const profit = state.pnl.months.map(m => m.revenue - m.cogs - m.fixedCost);
+  if (pnlChart) pnlChart.destroy();
+  pnlChart = new Chart(canvas.getContext('2d'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        { label: '매출', data: revenue, borderColor: '#2e6da4', backgroundColor: 'rgba(46,109,164,0.1)', fill: true, tension: .3 },
+        { label: '순이익', data: profit, borderColor: '#2f7a5c', backgroundColor: 'rgba(47,122,92,0.1)', fill: true, tension: .3 }
+      ]
+    },
+    options: { responsive: true, maintainAspectRatio: false }
+  });
+}
+
+/* =========================================================
+   02. 창업일정 (간트차트)
+========================================================= */
+function renderSchedule() {
+  const el = document.getElementById('tab-schedule');
+  const tasks = state.schedule.tasks;
+  let minDate = null, maxDate = null;
+  tasks.forEach(t => {
+    const s = new Date(t.start), e = new Date(t.end || t.start);
+    if (!minDate || s < minDate) minDate = s;
+    if (!maxDate || e > maxDate) maxDate = e;
+  });
+  const totalSpan = (minDate && maxDate) ? Math.max(maxDate - minDate, 86400000) : 86400000;
+
+  const rows = tasks.map((t, idx) => {
+    const s = new Date(t.start), e = new Date(t.end || t.start);
+    const leftPct = minDate ? ((s - minDate) / totalSpan) * 100 : 0;
+    const widthPct = minDate ? Math.max(((e - s) / totalSpan) * 100, 2) : 2;
+    const prog = t.done ? 100 : Number(t.progress || 0);
+    return `
+      <div class="gantt-row">
+        <div class="glabel" title="${escapeHtml(t.name)}">
+          <input type="checkbox" ${t.done ? 'checked' : ''} onchange="updateTask(${idx},'done',this.checked)" />
+          ${escapeHtml(t.name)} <span class="pill blue" style="margin-left:4px">${escapeHtml(t.owner||'-')}</span>
+        </div>
+        <div class="gantt-track">
+          <div class="gantt-bar ${t.done ? 'done' : ''}" style="left:${leftPct}%;width:${widthPct}%">
+            <div class="bar-progress" style="width:${prog}%"></div>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  const editRows = tasks.map((t, idx) => `
+    <tr>
+      <td><input type="text" value="${escapeHtml(t.name)}" oninput="updateTask(${idx},'name',this.value)" /></td>
+      <td><input type="text" value="${escapeHtml(t.owner)}" style="width:70px" oninput="updateTask(${idx},'owner',this.value)" /></td>
+      <td><input type="date" value="${t.start}" oninput="updateTask(${idx},'start',this.value)" /></td>
+      <td><input type="date" value="${t.end}" oninput="updateTask(${idx},'end',this.value)" /></td>
+      <td><input type="number" min="0" max="100" value="${t.progress||0}" style="width:65px" oninput="updateTask(${idx},'progress',this.value)" /></td>
+      <td><input type="checkbox" ${t.done?'checked':''} onchange="updateTask(${idx},'done',this.checked)" /></td>
+      <td><button class="btn danger sm" onclick="deleteTask(${idx})">삭제</button></td>
+    </tr>
+  `).join('');
+
+  const totalTasks = tasks.length;
+  const doneTasks = tasks.filter(t => t.done).length;
+  const overallProgress = totalTasks ? (tasks.reduce((a,t) => a + (t.done?100:Number(t.progress||0)),0) / totalTasks) : 0;
+
+  el.innerHTML = `
+    <h2 class="tab-title">창업 일정</h2>
+    <p class="tab-desc">작업을 등록하면 간트차트와 전체 진행률이 자동 계산됩니다.</p>
+    <div class="card section-block">
+      <h3 style="margin-top:0">전체 진행률 <span class="pill green">${doneTasks}/${totalTasks} 완료 · ${pct(overallProgress)}</span></h3>
+      ${rows || '<div class="empty">등록된 작업이 없습니다.</div>'}
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">작업 목록</h3>
+      <table>
+        <thead><tr><th>작업명</th><th>담당자</th><th>시작일</th><th>종료일</th><th>진행률(%)</th><th>완료</th><th></th></tr></thead>
+        <tbody>${editRows || '<tr><td colspan="7" class="empty">작업이 없습니다.</td></tr>'}</tbody>
+      </table>
+      <button class="btn" style="margin-top:10px" onclick="addTask()">+ 작업 추가</button>
+    </div>
+  `;
+}
+function addTask() {
+  state.schedule.tasks.push({ id: uid(), name: '새 작업', owner: '', start: todayStr(), end: todayStr(), done: false, progress: 0 });
+  saveState();
+  renderSchedule();
+}
+function deleteTask(idx) {
+  state.schedule.tasks.splice(idx, 1);
+  saveState();
+  renderSchedule();
+}
+function updateTask(idx, field, value) {
+  const t = state.schedule.tasks[idx];
+  if (!t) return;
+  if (field === 'done') { t.done = value; if (value) t.progress = 100; }
+  else if (field === 'progress') { t.progress = Math.min(100, Math.max(0, Number(value) || 0)); if (t.progress >= 100) t.done = true; }
+  else t[field] = value;
+  saveState();
+  renderSchedule();
+  if (activeTab === 'dashboard') renderDashboard();
+}
+
+/* =========================================================
+   인허가 체크리스트
+========================================================= */
+function renderLicense() {
+  const el = document.getElementById('tab-license');
+  const items = state.license.items;
+  const doneCount = items.filter(i => i.status === '완료').length;
+  const rows = items.map((i, idx) => `
+    <tr>
+      <td><input type="text" value="${escapeHtml(i.name)}" oninput="updateLicense(${idx},'name',this.value)" /></td>
+      <td>
+        <select onchange="updateLicense(${idx},'status',this.value)">
+          <option value="예정" ${i.status==='예정'?'selected':''}>예정</option>
+          <option value="검토중" ${i.status==='검토중'?'selected':''}>검토중</option>
+          <option value="진행중" ${i.status==='진행중'?'selected':''}>진행중</option>
+          <option value="완료" ${i.status==='완료'?'selected':''}>완료</option>
+        </select>
+      </td>
+      <td><input type="text" value="${escapeHtml(i.owner)}" style="width:70px" oninput="updateLicense(${idx},'owner',this.value)" /></td>
+      <td><input type="date" value="${i.dueDate}" oninput="updateLicense(${idx},'dueDate',this.value)" /></td>
+      <td><input type="text" value="${escapeHtml(i.note)}" oninput="updateLicense(${idx},'note',this.value)" /></td>
+      <td><button class="btn danger sm" onclick="deleteLicense(${idx})">삭제</button></td>
+    </tr>
+  `).join('');
+  el.innerHTML = `
+    <h2 class="tab-title">인허가 체크리스트</h2>
+    <p class="tab-desc">사료관리법 기준 반려동물 사료(간식) 제조·판매에 필요한 등록/신고 항목입니다. 지역·품목에 따라 세부사항이 다를 수 있어 시·군·구 축산 담당부서 확인을 권장합니다.</p>
+    <div class="grid section-block">
+      <div class="card kpi primary"><div class="label">완료</div><div class="value">${doneCount} / ${items.length}</div></div>
+    </div>
+    <div class="card">
+      <table>
+        <thead><tr><th>항목</th><th>상태</th><th>담당자</th><th>목표일</th><th>메모</th><th></th></tr></thead>
+        <tbody>${rows || '<tr><td colspan="6" class="empty">항목이 없습니다.</td></tr>'}</tbody>
+      </table>
+      <button class="btn" style="margin-top:10px" onclick="addLicense()">+ 항목 추가</button>
+    </div>
+  `;
+}
+function addLicense() {
+  state.license.items.push({ id: uid(), name: '새 항목', status: '예정', owner: '', dueDate: '', note: '' });
+  saveState();
+  renderLicense();
+}
+function deleteLicense(idx) {
+  state.license.items.splice(idx, 1);
+  saveState();
+  renderLicense();
+}
+function updateLicense(idx, field, value) {
+  state.license.items[idx][field] = value;
+  saveState();
+  renderLicense();
+}
+
+/* =========================================================
+   레시피 저장소 (R&D 버전 기록 — 원가계산기와 별개로 배합/공정 노트 보관)
+========================================================= */
+function renderRecipebook() {
+  const el = document.getElementById('tab-recipebook');
+  const entries = state.recipebook.entries.slice().sort((a,b) => b.date.localeCompare(a.date));
+  const rows = entries.map(en => {
+    const idx = state.recipebook.entries.findIndex(x => x.id === en.id);
+    return `
+    <div class="recipe-card">
+      <div class="recipe-head">
+        <input type="text" value="${escapeHtml(en.name)}" oninput="updateRecipebook(${idx},'name',this.value)" placeholder="레시피명" />
+        <button class="btn danger sm" onclick="deleteRecipebook(${idx})">삭제</button>
+      </div>
+      <div class="row">
+        <div>
+          <label class="field">버전</label>
+          <input type="text" value="${escapeHtml(en.version)}" oninput="updateRecipebook(${idx},'version',this.value)" placeholder="v1, v2..." />
+        </div>
+        <div>
+          <label class="field">날짜</label>
+          <input type="date" value="${en.date}" oninput="updateRecipebook(${idx},'date',this.value)" />
+        </div>
+        <div>
+          <label class="field">상태</label>
+          <select onchange="updateRecipebook(${idx},'status',this.value)">
+            <option value="테스트중" ${en.status==='테스트중'?'selected':''}>테스트중</option>
+            <option value="보류" ${en.status==='보류'?'selected':''}>보류</option>
+            <option value="확정" ${en.status==='확정'?'selected':''}>확정</option>
+          </select>
+        </div>
+      </div>
+      <label class="field" style="margin-top:8px">배합/재료 노트</label>
+      <textarea rows="2" oninput="updateRecipebook(${idx},'ingredientsNote',this.value)" placeholder="예: 닭가슴살 70% + 연어 30%, 저온건조 6시간">${escapeHtml(en.ingredientsNote)}</textarea>
+      <label class="field" style="margin-top:8px">공정/조리법 노트</label>
+      <textarea rows="2" oninput="updateRecipebook(${idx},'processNote',this.value)" placeholder="예: 65도 저온건조, 두께 5mm 슬라이스">${escapeHtml(en.processNote)}</textarea>
+      <label class="field" style="margin-top:8px">결과/피드백</label>
+      <textarea rows="2" oninput="updateRecipebook(${idx},'result',this.value)" placeholder="예: 식감 단단함, 다음엔 건조시간 줄이기">${escapeHtml(en.result)}</textarea>
+    </div>
+    `;
+  }).join('');
+  el.innerHTML = `
+    <h2 class="tab-title">레시피 저장소</h2>
+    <p class="tab-desc">원가계산기와는 별개로, 배합·공정을 바꿔본 시도들을 버전별로 기록해두는 R&D 노트입니다.</p>
+    ${rows || '<div class="empty">아직 기록이 없습니다. [새 레시피 기록]으로 시작하세요.</div>'}
+    <button class="btn" onclick="addRecipebook()">+ 새 레시피 기록</button>
+  `;
+}
+function addRecipebook() {
+  state.recipebook.entries.push({ id: uid(), name: '새 레시피', version: 'v1', date: todayStr(), status: '테스트중', ingredientsNote: '', processNote: '', result: '' });
+  saveState();
+  renderRecipebook();
+}
+function deleteRecipebook(idx) {
+  state.recipebook.entries.splice(idx, 1);
+  saveState();
+  renderRecipebook();
+}
+function updateRecipebook(idx, field, value) {
+  state.recipebook.entries[idx][field] = value;
+  saveState();
+  renderRecipebook();
+}
+
+/* =========================================================
+   기호성 테스트 (팔라터빌리티 테스트 로그)
+========================================================= */
+function renderPalatability() {
+  const el = document.getElementById('tab-palatability');
+  const tests = state.palatability.tests.slice().sort((a,b) => b.date.localeCompare(a.date));
+  const avgByRecipe = {};
+  state.palatability.tests.forEach(t => {
+    if (!avgByRecipe[t.recipeName]) avgByRecipe[t.recipeName] = [];
+    avgByRecipe[t.recipeName].push(Number(t.rating) || 0);
+  });
+  const summaryRows = Object.keys(avgByRecipe).map(name => {
+    const arr = avgByRecipe[name];
+    const avg = arr.reduce((a,b)=>a+b,0) / arr.length;
+    return `<tr><td>${escapeHtml(name)}</td><td>${arr.length}회</td><td>${'⭐'.repeat(Math.round(avg))}${avg.toFixed(1)}</td></tr>`;
+  }).join('');
+  const rows = tests.map(t => {
+    const idx = state.palatability.tests.findIndex(x => x.id === t.id);
+    return `
+    <tr>
+      <td><input type="date" value="${t.date}" oninput="updatePalatability(${idx},'date',this.value)" /></td>
+      <td><input type="text" value="${escapeHtml(t.recipeName)}" style="width:100px" oninput="updatePalatability(${idx},'recipeName',this.value)" /></td>
+      <td><input type="text" value="${escapeHtml(t.testerPet)}" style="width:80px" oninput="updatePalatability(${idx},'testerPet',this.value)" placeholder="반려동물 이름" /></td>
+      <td>
+        <select onchange="updatePalatability(${idx},'rating',this.value)">
+          ${[1,2,3,4,5].map(n => `<option value="${n}" ${Number(t.rating)===n?'selected':''}>${n}점</option>`).join('')}
+        </select>
+      </td>
+      <td>
+        <select onchange="updatePalatability(${idx},'eatResult',this.value)">
+          ${['완식','대부분 섭취','절반 섭취','조금만','거부'].map(o => `<option value="${o}" ${t.eatResult===o?'selected':''}>${o}</option>`).join('')}
+        </select>
+      </td>
+      <td><input type="text" value="${escapeHtml(t.note)}" oninput="updatePalatability(${idx},'note',this.value)" /></td>
+      <td><button class="btn danger sm" onclick="deletePalatability(${idx})">삭제</button></td>
+    </tr>
+  `;
+  }).join('');
+  el.innerHTML = `
+    <h2 class="tab-title">기호성 테스트</h2>
+    <p class="tab-desc">레시피별로 반려동물 반응을 기록하고 평균 평점을 자동 집계합니다.</p>
+    <div class="card section-block">
+      <h3 style="margin-top:0">레시피별 평균 평점</h3>
+      <table>
+        <thead><tr><th>레시피명</th><th>테스트 횟수</th><th>평균 평점</th></tr></thead>
+        <tbody>${summaryRows || '<tr><td colspan="3" class="empty">테스트 기록이 없습니다.</td></tr>'}</tbody>
+      </table>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">테스트 기록</h3>
+      <table>
+        <thead><tr><th>날짜</th><th>레시피명</th><th>반려동물</th><th>평점</th><th>섭취결과</th><th>메모</th><th></th></tr></thead>
+        <tbody>${rows || '<tr><td colspan="7" class="empty">기록이 없습니다.</td></tr>'}</tbody>
+      </table>
+      <button class="btn" style="margin-top:10px" onclick="addPalatability()">+ 테스트 기록 추가</button>
+    </div>
+  `;
+}
+function addPalatability() {
+  state.palatability.tests.push({ id: uid(), date: todayStr(), recipeName: '', testerPet: '', rating: 3, eatResult: '대부분 섭취', note: '' });
+  saveState();
+  renderPalatability();
+}
+function deletePalatability(idx) {
+  state.palatability.tests.splice(idx, 1);
+  saveState();
+  renderPalatability();
+}
+function updatePalatability(idx, field, value) {
+  state.palatability.tests[idx][field] = (field === 'rating') ? Number(value) : value;
+  saveState();
+  renderPalatability();
+}
+
+/* =========================================================
+   초기화
+========================================================= */
+if (getHistory().length === 0) pushSnapshot('최초 버전');
+renderAll();
+(function initCloud() {
+  const cfg = getCloudConfig();
+  if (cfg.url) {
+    setCloudStatus('연결됨 (동기화 중...)');
+    startCloudPolling();
+    pullFromCloud();
+  } else {
+    setCloudStatus('미설정');
+  }
+})();
+</script>
+</body>
+</html>
