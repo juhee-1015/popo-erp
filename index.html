@@ -128,6 +128,9 @@
     min-width: 0;
     box-shadow: 0 2px 10px rgba(180,140,100,0.08);
   }
+  .card.clickable { cursor: pointer; transition: box-shadow .12s ease, border-color .12s ease; }
+  .card.clickable:hover { border-color: var(--primary); box-shadow: 0 4px 14px rgba(0,0,0,0.1); }
+  .card.clickable .goto-hint { font-size: 10.5px; color: var(--primary-dark); margin-top: 6px; }
   .kpi .label { font-size: 12px; color: var(--sub); margin-bottom: 6px; }
   .kpi .value { font-size: clamp(15px, 3.4vw, 21px); font-weight: 700; overflow-wrap: anywhere; word-break: keep-all; line-height: 1.25; }
   .kpi .value.small { font-size: clamp(13px, 2.8vw, 16px); }
@@ -908,37 +911,42 @@ function renderDashboard() {
         <div class="label">월 필요 판매량</div>
         <div class="value">${neededUnitsPerMonth}개</div>
       </div>
-      <div class="card kpi">
+      <div class="card kpi clickable" onclick="setTab('pnl')">
         <div class="label">목표 달성률 (이번달)</div>
         <div class="value">${pct(achievement)}</div>
         <div class="sub">${won(cur.revenue)} / ${won(g.monthlyTarget)}</div>
+        <div class="goto-hint">손익 탭에서 자세히 보기 →</div>
       </div>
     </div>
 
     <div class="grid cols-4 section-block">
-      <div class="card kpi">
+      <div class="card kpi clickable" onclick="setTab('pnl')">
         <div class="label">이번달 순이익(추정)</div>
         <div class="value ${profit < 0 ? 'kpi-neg' : ''}" style="color:${profit < 0 ? 'var(--danger)' : 'var(--primary-dark)'}">${won(profit)}</div>
-        <div class="sub">매출-원가-고정비 (손익 탭 기준)</div>
+        <div class="sub">매출-원가-고정비</div>
+        <div class="goto-hint">손익 탭에서 자세히 보기 →</div>
       </div>
-      <div class="card kpi">
+      <div class="card kpi clickable" onclick="setTab('pnl')">
         <div class="label">손익분기점(BEP)</div>
         <div class="value small">${isFinite(bep.revenue) ? won(bep.revenue) : '계산불가'}</div>
         <div class="sub">약 ${isFinite(bep.units) ? Math.ceil(bep.units) : '-'}개 판매 시</div>
+        <div class="goto-hint">손익 탭에서 자세히 보기 →</div>
       </div>
-      <div class="card kpi">
+      <div class="card kpi clickable" onclick="setTab('budget')">
         <div class="label">총 투자금</div>
         <div class="value small">${won(bTotals.investment)}</div>
+        <div class="goto-hint">예산 탭에서 자세히 보기 →</div>
       </div>
-      <div class="card kpi">
+      <div class="card kpi clickable" onclick="setTab('budget')">
         <div class="label">현재 잔액</div>
         <div class="value small" style="color:${bTotals.balance < 0 ? 'var(--danger)' : 'var(--primary-dark)'}">${won(bTotals.balance)}</div>
+        <div class="goto-hint">예산 탭에서 자세히 보기 →</div>
       </div>
     </div>
 
     <div class="grid cols-2 section-block">
       <div class="card">
-        <h3 style="margin-top:0">이번주 TO DO <span class="pill blue">${weekTasks.length}건</span></h3>
+        <h3 style="margin-top:0">이번주 TO DO <span class="pill blue">${weekTasks.length}건</span> <button class="btn secondary sm" style="margin-left:auto" onclick="setTab('schedule')">창업일정 전체보기 →</button></h3>
         ${weekTasks.length ? weekTasks.map(t => `
           <div class="todo-item">
             <input type="checkbox" onchange="toggleTaskDone('${t.id}')" />
@@ -948,7 +956,7 @@ function renderDashboard() {
         `).join('') : '<div class="empty">이번주 예정된 작업이 없습니다. 창업일정 탭에서 추가해보세요.</div>'}
       </div>
       <div class="card">
-        <h3 style="margin-top:0">전체 진행률 <span class="pill green">${doneTasks}/${totalTasks} 완료</span></h3>
+        <h3 style="margin-top:0">전체 진행률 <span class="pill green">${doneTasks}/${totalTasks} 완료</span> <button class="btn secondary sm" style="margin-left:auto" onclick="setTab('schedule')">창업일정 전체보기 →</button></h3>
         <div style="height:14px;background:#f2f4f1;border-radius:8px;overflow:hidden;margin:10px 0">
           <div style="height:100%;width:${Math.min(overallProgress,100)}%;background:var(--primary);"></div>
         </div>
@@ -956,8 +964,8 @@ function renderDashboard() {
       </div>
     </div>
 
-    <div class="card section-block">
-      <h3 style="margin-top:0">월별 매출 추이 (목표 대비)</h3>
+    <div class="card section-block clickable" onclick="setTab('pnl')">
+      <h3 style="margin-top:0">올해 월별 매출 추이 (목표 대비) <span class="goto-hint">손익 탭에서 자세히 보기 →</span></h3>
       <div class="chart-wrap"><canvas id="revenueChartCanvas"></canvas></div>
     </div>
 
@@ -992,7 +1000,8 @@ function toggleTaskDone(id) {
 function renderDashboardCharts() {
   const canvas = document.getElementById('revenueChartCanvas');
   if (!canvas || typeof Chart === 'undefined') return;
-  const months = state.pnl.months;
+  const thisYear = String(new Date().getFullYear());
+  const months = state.pnl.months.filter(m => m.month.slice(0,4) === thisYear).sort((a,b) => a.month.localeCompare(b.month));
   const labels = months.map(m => m.month);
   const revenue = months.map(m => m.revenue);
   const target = months.map(() => state.goal.monthlyTarget);
@@ -1040,7 +1049,7 @@ function renderCost() {
           <input type="text" value="${won(perUnit)}" disabled style="background:var(--primary-light);color:var(--primary-dark);font-weight:700" />
         </div>
       </div>
-      <div class="muted" style="margin-top:8px">고정비는 손익 탭의 '이번달 고정비' 값을 그대로 가져옵니다. 레시피마다 이 간접비를 원가에 포함할지 선택할 수 있어요.</div>
+      <div class="muted" style="margin-top:8px">고정비는 손익 탭의 '이번달 고정비' 값을 그대로 가져옵니다. 레시피마다 이 간접비를 원가에 포함할지 선택할 수 있어요. <span class="goto-hint" style="cursor:pointer" onclick="setTab('pnl')">손익 탭에서 고정비 수정하기 →</span></div>
     </div>
 
     <div id="recipeList"></div>
@@ -1260,7 +1269,7 @@ function renderPrice() {
     <div class="card">
       <table>
         <thead><tr><th>제품명</th><th>변동원가(수수료 제외)</th><th>판매가</th><th>개당 순이익</th><th>마진율</th><th>원가율</th><th>권장 판매가</th></tr></thead>
-        <tbody>${rows || '<tr><td colspan="7" class="empty">원가계산기에서 레시피를 먼저 추가하세요.</td></tr>'}</tbody>
+        <tbody>${rows || `<tr><td colspan="7"><div class="empty">아직 레시피가 없습니다.</div><div style="text-align:center;margin-top:8px"><button class="btn secondary sm" onclick="setTab('cost')">원가계산기로 이동 →</button></div></td></tr>`}</tbody>
       </table>
     </div>
   `;
@@ -1992,8 +2001,10 @@ function updateIdea(idx, field, value) {
 function renderTax() {
   const el = document.getElementById('tab-tax');
   const t = state.tax;
-  const annualRevenue = state.pnl.months.reduce((a,m) => a + Number(m.revenue||0), 0);
-  const annualProfit = state.pnl.months.reduce((a,m) => a + (Number(m.revenue||0) - Number(m.cogs||0) - Number(m.fixedCost||0)), 0);
+  const thisYear = String(new Date().getFullYear());
+  const yearMonths = state.pnl.months.filter(m => m.month.slice(0,4) === thisYear);
+  const annualRevenue = yearMonths.reduce((a,m) => a + Number(m.revenue||0), 0);
+  const annualProfit = yearMonths.reduce((a,m) => a + (Number(m.revenue||0) - Number(m.cogs||0) - Number(m.fixedCost||0)), 0);
   let vatEstimate;
   if (t.simplifiedVat) {
     vatEstimate = annualRevenue * (Number(t.vatRate)/100) * 0.1;
@@ -2028,7 +2039,7 @@ function renderTax() {
         <div class="muted" style="margin-top:6px">계산: (연매출 − 연매입) × 10%</div>
       `}
       <div class="grid section-block" style="margin-top:14px">
-        <div class="card kpi"><div class="label">연매출(손익 탭 기준)</div><div class="value small">${won(annualRevenue)}</div></div>
+        <div class="card kpi clickable" onclick="setTab('pnl')"><div class="label">${thisYear}년 매출</div><div class="value small">${won(annualRevenue)}</div><div class="goto-hint">손익 탭에서 자세히 보기 →</div></div>
         <div class="card kpi primary"><div class="label">부가세 추정액</div><div class="value">${won(vatEstimate)}</div></div>
       </div>
     </div>
@@ -2036,7 +2047,7 @@ function renderTax() {
     <div class="card">
       <h3 style="margin-top:0">종합소득세 참고</h3>
       <div class="grid section-block">
-        <div class="card kpi"><div class="label">연간 순이익(손익 탭 기준)</div><div class="value small">${won(annualProfit)}</div></div>
+        <div class="card kpi clickable" onclick="setTab('pnl')"><div class="label">${thisYear}년 순이익</div><div class="value small">${won(annualProfit)}</div><div class="goto-hint">손익 탭에서 자세히 보기 →</div></div>
       </div>
       <div class="muted">종합소득세는 이 순이익(사업소득)에 다른 소득을 합산하고 각종 공제를 제외한 금액에 6~45% 누진세율을 적용합니다. 공제 항목이 많아 이 앱에서는 정확한 세액을 계산하지 않습니다 — 홈택스 모의계산 또는 세무사 상담을 권장합니다.</div>
     </div>
