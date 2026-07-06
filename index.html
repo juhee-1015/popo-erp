@@ -347,7 +347,41 @@ function migrateState(s) {
   if (!s.meetings) s.meetings = { notes: [] };
   if (!s.ideas) s.ideas = { list: [] };
   if (!s.tax) s.tax = { simplifiedVat: false, vatRate: 20, purchaseAmount: 0 };
+  if (!s.pnl) s.pnl = { months: [] };
+  ensurePnlYears(s);
   return s;
+}
+
+function ensurePnlYears(s) {
+  // 손익을 연도 단위로 완전히(1~12월) 채워서, 연도별/월별로 정확히 구분되게 함
+  const map = {};
+  (s.pnl.months || []).forEach(m => { map[m.month] = m; });
+  const years = new Set();
+  Object.keys(map).forEach(k => years.add(k.slice(0, 4)));
+  years.add(String(new Date().getFullYear()));
+  const defaultFixed = (s.fixedCostItems || []).reduce((a, i) => a + (Number(i.amount) || 0), 0);
+  years.forEach(y => {
+    for (let i = 0; i < 12; i++) {
+      const key = y + '-' + String(i + 1).padStart(2, '0');
+      if (!map[key]) map[key] = { month: key, revenue: 0, cogs: 0, fixedCost: defaultFixed };
+    }
+  });
+  s.pnl.months = Object.values(map).sort((a, b) => a.month.localeCompare(b.month));
+}
+function addNextPnlYear() {
+  const years = Array.from(new Set(state.pnl.months.map(m => m.month.slice(0,4)))).sort();
+  const nextYear = String(Number(years[years.length - 1] || new Date().getFullYear()) + 1);
+  const defaultFixed = (state.fixedCostItems || []).reduce((a, i) => a + (Number(i.amount) || 0), 0);
+  for (let i = 0; i < 12; i++) {
+    const key = nextYear + '-' + String(i + 1).padStart(2, '0');
+    if (!state.pnl.months.some(m => m.month === key)) {
+      state.pnl.months.push({ month: key, revenue: 0, cogs: 0, fixedCost: defaultFixed });
+    }
+  }
+  state.pnl.months.sort((a,b) => a.month.localeCompare(b.month));
+  pnlSelectedYear = nextYear;
+  saveState();
+  renderPnl();
 }
 
 function defaultFixedCostItems() {
@@ -412,7 +446,7 @@ let state = loadState();
 function loadState() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return defaultState();
+    if (!raw) return migrateState(defaultState());
     const parsed = JSON.parse(raw);
     // shallow-merge to survive schema growth
     const base = defaultState();
@@ -426,7 +460,7 @@ function loadState() {
     return merged;
   } catch (e) {
     console.warn('상태 로드 실패, 기본값 사용', e);
-    return defaultState();
+    return migrateState(defaultState());
   }
 }
 
@@ -1312,11 +1346,20 @@ function renderBudgetChart() {
 }
 
 /* =========================================================
-   09. 손익 (12개월)
+   09. 손익 (연도별 12개월)
 ========================================================= */
+let pnlSelectedYear = String(new Date().getFullYear());
+
 function renderPnl() {
   const el = document.getElementById('tab-pnl');
-  const rows = state.pnl.months.map((m, idx) => {
+  const years = Array.from(new Set(state.pnl.months.map(m => m.month.slice(0,4)))).sort();
+  if (!years.includes(pnlSelectedYear)) pnlSelectedYear = years[years.length - 1] || String(new Date().getFullYear());
+  const yearMonths = state.pnl.months.filter(m => m.month.slice(0,4) === pnlSelectedYear).sort((a,b) => a.month.localeCompare(b.month));
+
+  const yearTabsHtml = years.map(y => `<button class="${y===pnlSelectedYear?'active':''}" onclick="selectPnlYear('${y}')">${y}</button>`).join('');
+
+  const rows = yearMonths.map((m) => {
+    const idx = state.pnl.months.findIndex(x => x.month === m.month);
     const profit = m.revenue - m.cogs - m.fixedCost;
     const margin = m.revenue > 0 ? (profit / m.revenue) * 100 : 0;
     return `
@@ -1330,8 +1373,8 @@ function renderPnl() {
       </tr>
     `;
   }).join('');
-  const totalRevenue = state.pnl.months.reduce((a,m) => a + Number(m.revenue||0), 0);
-  const totalProfit = state.pnl.months.reduce((a,m) => a + (Number(m.revenue||0) - Number(m.cogs||0) - Number(m.fixedCost||0)), 0);
+  const totalRevenue = yearMonths.reduce((a,m) => a + Number(m.revenue||0), 0);
+  const totalProfit = yearMonths.reduce((a,m) => a + (Number(m.revenue||0) - Number(m.cogs||0) - Number(m.fixedCost||0)), 0);
   const fcItems = state.fixedCostItems || [];
   const fcTotal = fcItems.reduce((a,i) => a + (Number(i.amount)||0), 0);
   const fcRows = fcItems.map((i, idx) => `
@@ -1342,8 +1385,8 @@ function renderPnl() {
     </tr>
   `).join('');
   el.innerHTML = `
-    <h2 class="tab-title">손익 (12개월)</h2>
-    <p class="tab-desc">월별 매출/매출원가/고정비만 입력하면 순이익과 마진율이 자동 계산됩니다. 스마트스토어 등 판매 수수료는 매출에 비례하는 변동비라 원가계산기의 "판매 수수료(%)"에서 반영되고, 여기 고정비는 매출과 상관없이 매달 나가는 비용(임대료·인건비 등)입니다.</p>
+    <h2 class="tab-title">손익</h2>
+    <p class="tab-desc">연도별로 12개월이 항상 채워져 있어서, 연도를 선택해 월별 손익을 정확히 확인할 수 있습니다. 스마트스토어 등 판매 수수료는 매출에 비례하는 변동비라 원가계산기의 "판매 수수료(%)"에서 반영되고, 여기 고정비는 매출과 상관없이 매달 나가는 비용(임대료·인건비 등)입니다.</p>
 
     <div class="card section-block">
       <h3 style="margin-top:0">고정비 상세 항목 <span class="hint">합계 ${won(fcTotal)}</span></h3>
@@ -1354,14 +1397,19 @@ function renderPnl() {
       <div class="row" style="margin-top:10px">
         <button class="btn secondary sm" onclick="addFixedCostItem()">+ 항목 추가</button>
         <button class="btn sm" onclick="applyFixedCostToCurrentMonth()">이번달에 합계 적용</button>
-        <button class="btn sm" onclick="applyFixedCostToAllMonths()">12개월 전체에 합계 적용</button>
+        <button class="btn sm" onclick="applyFixedCostToYear()">${pnlSelectedYear}년 전체에 합계 적용</button>
       </div>
-      <div class="muted" style="margin-top:8px">여기서 항목을 정리해두고, "적용" 버튼을 누르면 아래 12개월 표의 고정비 칸에 합계가 채워집니다. 달마다 다르면 아래 표에서 개별적으로 다시 조정하시면 돼요.</div>
+      <div class="muted" style="margin-top:8px">여기서 항목을 정리해두고, "적용" 버튼을 누르면 아래 표의 고정비 칸에 합계가 채워집니다. 달마다 다르면 아래 표에서 개별적으로 다시 조정하시면 돼요.</div>
+    </div>
+
+    <div class="section-block" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+      <div class="row" style="gap:4px;flex:none">${yearTabsHtml}</div>
+      <button class="btn secondary sm" onclick="addNextPnlYear()">+ 다음 연도 추가</button>
     </div>
 
     <div class="grid cols-2 section-block">
-      <div class="card kpi primary"><div class="label">12개월 누적 매출</div><div class="value">${won(totalRevenue)}</div></div>
-      <div class="card kpi"><div class="label">12개월 누적 순이익</div><div class="value" style="color:${totalProfit<0?'var(--danger)':'var(--primary-dark)'}">${won(totalProfit)}</div></div>
+      <div class="card kpi primary"><div class="label">${pnlSelectedYear}년 누적 매출</div><div class="value">${won(totalRevenue)}</div></div>
+      <div class="card kpi"><div class="label">${pnlSelectedYear}년 누적 순이익</div><div class="value" style="color:${totalProfit<0?'var(--danger)':'var(--primary-dark)'}">${won(totalProfit)}</div></div>
     </div>
     <div class="card section-block">
       <div class="chart-wrap"><canvas id="pnlChartCanvas"></canvas></div>
@@ -1373,6 +1421,11 @@ function renderPnl() {
       </table>
     </div>
   `;
+  renderPnlChart();
+}
+function selectPnlYear(y) {
+  pnlSelectedYear = y;
+  renderPnl();
 }
 function addFixedCostItem() {
   state.fixedCostItems.push({ id: uid(), name: '새 항목', amount: 0 });
@@ -1398,16 +1451,14 @@ function applyFixedCostToCurrentMonth() {
   if (m) m.fixedCost = fixedCostTotal();
   saveState();
   renderPnl();
-  renderPnlChart();
   if (activeTab === 'dashboard') renderDashboard();
   if (activeTab === 'cost') renderCost();
 }
-function applyFixedCostToAllMonths() {
+function applyFixedCostToYear() {
   const total = fixedCostTotal();
-  state.pnl.months.forEach(m => { m.fixedCost = total; });
+  state.pnl.months.filter(m => m.month.slice(0,4) === pnlSelectedYear).forEach(m => { m.fixedCost = total; });
   saveState();
   renderPnl();
-  renderPnlChart();
   if (activeTab === 'dashboard') renderDashboard();
   if (activeTab === 'cost') renderCost();
 }
@@ -1415,15 +1466,15 @@ function updatePnl(idx, field, value) {
   state.pnl.months[idx][field] = Number(value) || 0;
   saveState();
   renderPnl();
-  renderPnlChart();
   if (activeTab === 'dashboard') renderDashboard();
 }
 function renderPnlChart() {
   const canvas = document.getElementById('pnlChartCanvas');
   if (!canvas || typeof Chart === 'undefined') return;
-  const labels = state.pnl.months.map(m => m.month);
-  const revenue = state.pnl.months.map(m => m.revenue);
-  const profit = state.pnl.months.map(m => m.revenue - m.cogs - m.fixedCost);
+  const yearMonths = state.pnl.months.filter(m => m.month.slice(0,4) === pnlSelectedYear).sort((a,b) => a.month.localeCompare(b.month));
+  const labels = yearMonths.map(m => m.month);
+  const revenue = yearMonths.map(m => m.revenue);
+  const profit = yearMonths.map(m => m.revenue - m.cogs - m.fixedCost);
   if (pnlChart) pnlChart.destroy();
   pnlChart = new Chart(canvas.getContext('2d'), {
     type: 'line',
