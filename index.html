@@ -351,7 +351,9 @@ function migrateState(s) {
   if (!s.ideas) s.ideas = { list: [] };
   if (!s.tax) s.tax = { simplifiedVat: false, vatRate: 20, purchaseAmount: 0 };
   if (!s.pnl) s.pnl = { months: [] };
+  if (!s.schedule) s.schedule = { tasks: [] };
   ensurePnlYears(s);
+  dedupeScheduleOnce(s);
   return s;
 }
 
@@ -418,6 +420,20 @@ function timelineSeedTasks() {
   ];
 }
 
+function dedupeScheduleOnce(s) {
+  // 이전 버전 버그로 8/2 타임라인이 중복 저장된 경우를 1회 정리 (동일 이름의 시드 작업 중 1개만 남김)
+  if (s._dedupeScheduleV1) return;
+  const seedNames = new Set(timelineSeedTasks().map(t => t.name));
+  const seen = new Set();
+  s.schedule.tasks = (s.schedule.tasks || []).filter(t => {
+    if (!seedNames.has(t.name)) return true;
+    if (seen.has(t.name)) return false;
+    seen.add(t.name);
+    return true;
+  });
+  s._dedupeScheduleV1 = true;
+}
+
 function defaultLicenseItems() {
   return [
     { id: uid(), name: '사업자등록 (통신판매업 겸용)', status: '예정', owner: '', dueDate: '2026-08-31', note: '개인/법인, 동업 형태 결정 후 진행' },
@@ -449,7 +465,11 @@ let state = loadState();
 function loadState() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return migrateState(defaultState());
+    if (!raw) {
+      const fresh = migrateState(defaultState());
+      fresh._timelineSeededV1 = true; // 새로 설치한 경우 defaultState()에 이미 타임라인이 들어있으므로 중복 추가 방지
+      return fresh;
+    }
     const parsed = JSON.parse(raw);
     // shallow-merge to survive schema growth
     const base = defaultState();
@@ -463,7 +483,9 @@ function loadState() {
     return merged;
   } catch (e) {
     console.warn('상태 로드 실패, 기본값 사용', e);
-    return migrateState(defaultState());
+    const fresh = migrateState(defaultState());
+    fresh._timelineSeededV1 = true;
+    return fresh;
   }
 }
 
