@@ -884,15 +884,15 @@ function renderDashboard() {
         <div class="row">
           <div>
             <label class="field">월 매출 목표 (원)</label>
-            <input type="number" id="g_monthlyTarget" value="${g.monthlyTarget}" oninput="updateGoal()" />
+            <input type="number" id="g_monthlyTarget" value="${g.monthlyTarget}" onchange="updateGoal()" />
           </div>
           <div>
             <label class="field">객단가 (평균 판매가, 원)</label>
-            <input type="number" id="g_avgOrderValue" value="${g.avgOrderValue}" oninput="updateGoal()" />
+            <input type="number" id="g_avgOrderValue" value="${g.avgOrderValue}" onchange="updateGoal()" />
           </div>
           <div>
             <label class="field">월 영업일수</label>
-            <input type="number" id="g_workDays" value="${g.workDays}" oninput="updateGoal()" />
+            <input type="number" id="g_workDays" value="${g.workDays}" onchange="updateGoal()" />
           </div>
         </div>
       </div>
@@ -1042,7 +1042,7 @@ function renderCost() {
         </div>
         <div>
           <label class="field">월 예상 총 생산량 (개)</label>
-          <input type="number" value="${state.overhead.monthlyOutputUnits}" oninput="updateOverhead(this.value)" />
+          <input type="number" value="${state.overhead.monthlyOutputUnits}" onchange="updateOverhead(this.value)" />
         </div>
         <div>
           <label class="field">개당 간접비 배분 (자동)</label>
@@ -1074,16 +1074,16 @@ function renderRecipeList() {
     const c = recipeCalc(r);
     const ingRows = (r.ingredients || []).map(ing => `
       <tr>
-        <td><input type="text" value="${escapeHtml(ing.name)}" oninput="updateIngredient('${r.id}','${ing.id}','name',this.value)" placeholder="예: 닭가슴살" /></td>
-        <td><input type="number" value="${ing.weight}" style="width:90px" oninput="updateIngredient('${r.id}','${ing.id}','weight',this.value)" /></td>
-        <td><input type="number" value="${ing.cost}" style="width:100px" oninput="updateIngredient('${r.id}','${ing.id}','cost',this.value)" /></td>
+        <td><input type="text" value="${escapeHtml(ing.name)}" onchange="updateIngredient('${r.id}','${ing.id}','name',this.value)" placeholder="예: 닭가슴살" /></td>
+        <td><input type="number" value="${ing.weight}" style="width:90px" onchange="updateIngredient('${r.id}','${ing.id}','weight',this.value)" /></td>
+        <td><input type="number" value="${ing.cost}" style="width:100px" onchange="updateIngredient('${r.id}','${ing.id}','cost',this.value)" /></td>
         <td><button class="btn danger sm" onclick="removeIngredient('${r.id}','${ing.id}')">삭제</button></td>
       </tr>
     `).join('');
     return `
     <div class="recipe-card">
       <div class="recipe-head">
-        <input type="text" value="${escapeHtml(r.name)}" oninput="updateRecipe('${r.id}','name',this.value)" />
+        <input type="text" value="${escapeHtml(r.name)}" onchange="updateRecipe('${r.id}','name',this.value)" />
         <button class="btn danger sm" onclick="deleteRecipe('${r.id}')">삭제</button>
       </div>
 
@@ -1104,7 +1104,7 @@ function renderRecipeList() {
         <div class="arrow">→</div>
         <div class="fstep">
           <div class="ftitle">건조 후 무게(g)</div>
-          <input type="number" value="${r.driedWeight}" oninput="updateRecipe('${r.id}','driedWeight',this.value)" />
+          <input type="number" value="${r.driedWeight}" onchange="updateRecipe('${r.id}','driedWeight',this.value)" />
         </div>
         <div class="arrow">→</div>
         <div class="fstep auto">
@@ -1114,7 +1114,7 @@ function renderRecipeList() {
         <div class="arrow">→</div>
         <div class="fstep">
           <div class="ftitle">1개당 용량(g)</div>
-          <input type="number" value="${r.packageSize}" oninput="updateRecipe('${r.id}','packageSize',this.value)" />
+          <input type="number" value="${r.packageSize}" onchange="updateRecipe('${r.id}','packageSize',this.value)" />
         </div>
         <div class="arrow">→</div>
         <div class="fstep auto">
@@ -1130,17 +1130,17 @@ function renderRecipeList() {
         <div class="arrow">→</div>
         <div class="fstep">
           <div class="ftitle">포장비(원)</div>
-          <input type="number" value="${r.packagingCost}" oninput="updateRecipe('${r.id}','packagingCost',this.value)" />
+          <input type="number" value="${r.packagingCost}" onchange="updateRecipe('${r.id}','packagingCost',this.value)" />
         </div>
         <div class="arrow">→</div>
         <div class="fstep">
           <div class="ftitle">스티커(원)</div>
-          <input type="number" value="${r.stickerCost}" oninput="updateRecipe('${r.id}','stickerCost',this.value)" />
+          <input type="number" value="${r.stickerCost}" onchange="updateRecipe('${r.id}','stickerCost',this.value)" />
         </div>
         <div class="arrow">→</div>
         <div class="fstep">
           <div class="ftitle">택배비(원)</div>
-          <input type="number" value="${r.shippingCost}" oninput="updateRecipe('${r.id}','shippingCost',this.value)" />
+          <input type="number" value="${r.shippingCost}" onchange="updateRecipe('${r.id}','shippingCost',this.value)" />
         </div>
         <div class="arrow">→</div>
         <div class="fstep auto">
@@ -1150,12 +1150,12 @@ function renderRecipeList() {
         <div class="arrow">→</div>
         <div class="fstep">
           <div class="ftitle">판매 수수료(%)<br/><span style="font-size:9px">스마트스토어 등</span></div>
-          <input type="number" value="${r.feeRate}" step="0.1" oninput="updateRecipe('${r.id}','feeRate',this.value)" />
+          <input type="number" value="${r.feeRate}" step="0.1" onchange="updateRecipe('${r.id}','feeRate',this.value)" />
         </div>
         <div class="arrow">→</div>
         <div class="fstep">
           <div class="ftitle">판매가(원)</div>
-          <input type="number" value="${r.sellingPrice}" oninput="updateRecipe('${r.id}','sellingPrice',this.value)" />
+          <input type="number" value="${r.sellingPrice}" onchange="updateRecipe('${r.id}','sellingPrice',this.value)" />
         </div>
         <div class="arrow">→</div>
         <div class="fstep result">
@@ -1177,7 +1177,7 @@ function renderRecipeList() {
       <div class="row" style="margin-top:6px">
         <div>
           <label class="field">목표 마진율(%) — 권장 판매가 계산용</label>
-          <input type="number" value="${r.targetMarginRate}" oninput="updateRecipe('${r.id}','targetMarginRate',this.value)" />
+          <input type="number" value="${r.targetMarginRate}" onchange="updateRecipe('${r.id}','targetMarginRate',this.value)" />
         </div>
         <div class="card" style="background:var(--primary-light);border:none;flex:1">
           <div class="label" style="color:var(--primary-dark)">권장 판매가 (자동)</div>
@@ -1255,7 +1255,7 @@ function renderPrice() {
       <tr>
         <td>${escapeHtml(r.name)}</td>
         <td>${won(c.variableCostExFee)}</td>
-        <td><input type="number" value="${r.sellingPrice}" style="width:90px" oninput="updateRecipe('${r.id}','sellingPrice',this.value)" /></td>
+        <td><input type="number" value="${r.sellingPrice}" style="width:90px" onchange="updateRecipe('${r.id}','sellingPrice',this.value)" /></td>
         <td style="color:${c.profitPerUnit < 0 ? 'var(--danger)' : 'inherit'}">${won(c.profitPerUnit)}</td>
         <td>${r.sellingPrice > 0 ? pct((c.profitPerUnit / r.sellingPrice) * 100) : '-'}</td>
         <td>${pct(c.costRatio)}</td>
@@ -1283,16 +1283,16 @@ function renderBudget() {
   const t = budgetTotals();
   const rows = state.budget.entries.slice().sort((a,b) => b.date.localeCompare(a.date)).map(e => `
     <tr>
-      <td><input type="date" value="${e.date}" oninput="updateBudgetEntry('${e.id}','date',this.value)" /></td>
+      <td><input type="date" value="${e.date}" onchange="updateBudgetEntry('${e.id}','date',this.value)" /></td>
       <td>
         <select onchange="updateBudgetEntry('${e.id}','type',this.value)">
           <option value="income" ${e.type==='income'?'selected':''}>수입</option>
           <option value="expense" ${e.type==='expense'?'selected':''}>지출</option>
         </select>
       </td>
-      <td><input type="text" value="${escapeHtml(e.category)}" oninput="updateBudgetEntry('${e.id}','category',this.value)" placeholder="투자금/재료비/마케팅비 등" /></td>
-      <td><input type="text" value="${escapeHtml(e.item)}" oninput="updateBudgetEntry('${e.id}','item',this.value)" /></td>
-      <td><input type="number" value="${e.amount}" style="width:100px" oninput="updateBudgetEntry('${e.id}','amount',this.value)" /></td>
+      <td><input type="text" value="${escapeHtml(e.category)}" onchange="updateBudgetEntry('${e.id}','category',this.value)" placeholder="투자금/재료비/마케팅비 등" /></td>
+      <td><input type="text" value="${escapeHtml(e.item)}" onchange="updateBudgetEntry('${e.id}','item',this.value)" /></td>
+      <td><input type="number" value="${e.amount}" style="width:100px" onchange="updateBudgetEntry('${e.id}','amount',this.value)" /></td>
       <td><button class="btn danger sm" onclick="deleteBudgetEntry('${e.id}')">삭제</button></td>
     </tr>
   `).join('');
@@ -1374,9 +1374,9 @@ function renderPnl() {
     return `
       <tr>
         <td>${m.month}</td>
-        <td><input type="number" value="${m.revenue}" style="width:100px" oninput="updatePnl(${idx},'revenue',this.value)" /></td>
-        <td><input type="number" value="${m.cogs}" style="width:100px" oninput="updatePnl(${idx},'cogs',this.value)" /></td>
-        <td><input type="number" value="${m.fixedCost}" style="width:100px" oninput="updatePnl(${idx},'fixedCost',this.value)" /></td>
+        <td><input type="number" value="${m.revenue}" style="width:100px" onchange="updatePnl(${idx},'revenue',this.value)" /></td>
+        <td><input type="number" value="${m.cogs}" style="width:100px" onchange="updatePnl(${idx},'cogs',this.value)" /></td>
+        <td><input type="number" value="${m.fixedCost}" style="width:100px" onchange="updatePnl(${idx},'fixedCost',this.value)" /></td>
         <td style="color:${profit<0?'var(--danger)':'inherit'};font-weight:600">${won(profit)}</td>
         <td>${pct(margin)}</td>
       </tr>
@@ -1388,8 +1388,8 @@ function renderPnl() {
   const fcTotal = fcItems.reduce((a,i) => a + (Number(i.amount)||0), 0);
   const fcRows = fcItems.map((i, idx) => `
     <tr>
-      <td><input type="text" value="${escapeHtml(i.name)}" oninput="updateFixedCostItem(${idx},'name',this.value)" /></td>
-      <td><input type="number" value="${i.amount}" style="width:110px" oninput="updateFixedCostItem(${idx},'amount',this.value)" /></td>
+      <td><input type="text" value="${escapeHtml(i.name)}" onchange="updateFixedCostItem(${idx},'name',this.value)" /></td>
+      <td><input type="number" value="${i.amount}" style="width:110px" onchange="updateFixedCostItem(${idx},'amount',this.value)" /></td>
       <td><button class="btn danger sm" onclick="deleteFixedCostItem(${idx})">삭제</button></td>
     </tr>
   `).join('');
@@ -1534,11 +1534,11 @@ function renderSchedule() {
 
   const editRows = tasks.map((t, idx) => `
     <tr>
-      <td><input type="text" value="${escapeHtml(t.name)}" oninput="updateTask(${idx},'name',this.value)" /></td>
-      <td><input type="text" value="${escapeHtml(t.owner)}" style="width:70px" oninput="updateTask(${idx},'owner',this.value)" /></td>
-      <td><input type="date" value="${t.start}" oninput="updateTask(${idx},'start',this.value)" /></td>
-      <td><input type="date" value="${t.end}" oninput="updateTask(${idx},'end',this.value)" /></td>
-      <td><input type="number" min="0" max="100" value="${t.progress||0}" style="width:65px" oninput="updateTask(${idx},'progress',this.value)" /></td>
+      <td><input type="text" value="${escapeHtml(t.name)}" onchange="updateTask(${idx},'name',this.value)" /></td>
+      <td><input type="text" value="${escapeHtml(t.owner)}" style="width:70px" onchange="updateTask(${idx},'owner',this.value)" /></td>
+      <td><input type="date" value="${t.start}" onchange="updateTask(${idx},'start',this.value)" /></td>
+      <td><input type="date" value="${t.end}" onchange="updateTask(${idx},'end',this.value)" /></td>
+      <td><input type="number" min="0" max="100" value="${t.progress||0}" style="width:65px" onchange="updateTask(${idx},'progress',this.value)" /></td>
       <td><input type="checkbox" ${t.done?'checked':''} onchange="updateTask(${idx},'done',this.checked)" /></td>
       <td><button class="btn danger sm" onclick="deleteTask(${idx})">삭제</button></td>
     </tr>
@@ -1595,7 +1595,7 @@ function renderLicense() {
   const doneCount = items.filter(i => i.status === '완료').length;
   const rows = items.map((i, idx) => `
     <tr>
-      <td><input type="text" value="${escapeHtml(i.name)}" oninput="updateLicense(${idx},'name',this.value)" /></td>
+      <td><input type="text" value="${escapeHtml(i.name)}" onchange="updateLicense(${idx},'name',this.value)" /></td>
       <td>
         <select onchange="updateLicense(${idx},'status',this.value)">
           <option value="예정" ${i.status==='예정'?'selected':''}>예정</option>
@@ -1604,9 +1604,9 @@ function renderLicense() {
           <option value="완료" ${i.status==='완료'?'selected':''}>완료</option>
         </select>
       </td>
-      <td><input type="text" value="${escapeHtml(i.owner)}" style="width:70px" oninput="updateLicense(${idx},'owner',this.value)" /></td>
-      <td><input type="date" value="${i.dueDate}" oninput="updateLicense(${idx},'dueDate',this.value)" /></td>
-      <td><input type="text" value="${escapeHtml(i.note)}" oninput="updateLicense(${idx},'note',this.value)" /></td>
+      <td><input type="text" value="${escapeHtml(i.owner)}" style="width:70px" onchange="updateLicense(${idx},'owner',this.value)" /></td>
+      <td><input type="date" value="${i.dueDate}" onchange="updateLicense(${idx},'dueDate',this.value)" /></td>
+      <td><input type="text" value="${escapeHtml(i.note)}" onchange="updateLicense(${idx},'note',this.value)" /></td>
       <td><button class="btn danger sm" onclick="deleteLicense(${idx})">삭제</button></td>
     </tr>
   `).join('');
@@ -1652,17 +1652,17 @@ function renderRecipebook() {
     return `
     <div class="recipe-card">
       <div class="recipe-head">
-        <input type="text" value="${escapeHtml(en.name)}" oninput="updateRecipebook(${idx},'name',this.value)" placeholder="레시피명" />
+        <input type="text" value="${escapeHtml(en.name)}" onchange="updateRecipebook(${idx},'name',this.value)" placeholder="레시피명" />
         <button class="btn danger sm" onclick="deleteRecipebook(${idx})">삭제</button>
       </div>
       <div class="row">
         <div>
           <label class="field">버전</label>
-          <input type="text" value="${escapeHtml(en.version)}" oninput="updateRecipebook(${idx},'version',this.value)" placeholder="v1, v2..." />
+          <input type="text" value="${escapeHtml(en.version)}" onchange="updateRecipebook(${idx},'version',this.value)" placeholder="v1, v2..." />
         </div>
         <div>
           <label class="field">날짜</label>
-          <input type="date" value="${en.date}" oninput="updateRecipebook(${idx},'date',this.value)" />
+          <input type="date" value="${en.date}" onchange="updateRecipebook(${idx},'date',this.value)" />
         </div>
         <div>
           <label class="field">상태</label>
@@ -1674,11 +1674,11 @@ function renderRecipebook() {
         </div>
       </div>
       <label class="field" style="margin-top:8px">배합/재료 노트</label>
-      <textarea rows="2" oninput="updateRecipebook(${idx},'ingredientsNote',this.value)" placeholder="예: 닭가슴살 70% + 연어 30%, 저온건조 6시간">${escapeHtml(en.ingredientsNote)}</textarea>
+      <textarea rows="2" onchange="updateRecipebook(${idx},'ingredientsNote',this.value)" placeholder="예: 닭가슴살 70% + 연어 30%, 저온건조 6시간">${escapeHtml(en.ingredientsNote)}</textarea>
       <label class="field" style="margin-top:8px">공정/조리법 노트</label>
-      <textarea rows="2" oninput="updateRecipebook(${idx},'processNote',this.value)" placeholder="예: 65도 저온건조, 두께 5mm 슬라이스">${escapeHtml(en.processNote)}</textarea>
+      <textarea rows="2" onchange="updateRecipebook(${idx},'processNote',this.value)" placeholder="예: 65도 저온건조, 두께 5mm 슬라이스">${escapeHtml(en.processNote)}</textarea>
       <label class="field" style="margin-top:8px">결과/피드백</label>
-      <textarea rows="2" oninput="updateRecipebook(${idx},'result',this.value)" placeholder="예: 식감 단단함, 다음엔 건조시간 줄이기">${escapeHtml(en.result)}</textarea>
+      <textarea rows="2" onchange="updateRecipebook(${idx},'result',this.value)" placeholder="예: 식감 단단함, 다음엔 건조시간 줄이기">${escapeHtml(en.result)}</textarea>
     </div>
     `;
   }).join('');
@@ -1725,9 +1725,9 @@ function renderPalatability() {
     const idx = state.palatability.tests.findIndex(x => x.id === t.id);
     return `
     <tr>
-      <td><input type="date" value="${t.date}" oninput="updatePalatability(${idx},'date',this.value)" /></td>
-      <td><input type="text" value="${escapeHtml(t.recipeName)}" style="width:100px" oninput="updatePalatability(${idx},'recipeName',this.value)" /></td>
-      <td><input type="text" value="${escapeHtml(t.testerPet)}" style="width:80px" oninput="updatePalatability(${idx},'testerPet',this.value)" placeholder="반려동물 이름" /></td>
+      <td><input type="date" value="${t.date}" onchange="updatePalatability(${idx},'date',this.value)" /></td>
+      <td><input type="text" value="${escapeHtml(t.recipeName)}" style="width:100px" onchange="updatePalatability(${idx},'recipeName',this.value)" /></td>
+      <td><input type="text" value="${escapeHtml(t.testerPet)}" style="width:80px" onchange="updatePalatability(${idx},'testerPet',this.value)" placeholder="반려동물 이름" /></td>
       <td>
         <select onchange="updatePalatability(${idx},'rating',this.value)">
           ${[1,2,3,4,5].map(n => `<option value="${n}" ${Number(t.rating)===n?'selected':''}>${n}점</option>`).join('')}
@@ -1738,7 +1738,7 @@ function renderPalatability() {
           ${['완식','대부분 섭취','절반 섭취','조금만','거부'].map(o => `<option value="${o}" ${t.eatResult===o?'selected':''}>${o}</option>`).join('')}
         </select>
       </td>
-      <td><input type="text" value="${escapeHtml(t.note)}" oninput="updatePalatability(${idx},'note',this.value)" /></td>
+      <td><input type="text" value="${escapeHtml(t.note)}" onchange="updatePalatability(${idx},'note',this.value)" /></td>
       <td><button class="btn danger sm" onclick="deletePalatability(${idx})">삭제</button></td>
     </tr>
   `;
@@ -1796,7 +1796,7 @@ function renderInventory() {
     const isExpiring = i.expiryDate && !isExpired && new Date(i.expiryDate) <= soon;
     return `
     <tr>
-      <td><input type="text" value="${escapeHtml(i.name)}" oninput="updateInventory(${idx},'name',this.value)" /></td>
+      <td><input type="text" value="${escapeHtml(i.name)}" onchange="updateInventory(${idx},'name',this.value)" /></td>
       <td>
         <select onchange="updateInventory(${idx},'category',this.value)">
           <option value="원재료" ${i.category==='원재료'?'selected':''}>원재료</option>
@@ -1804,10 +1804,10 @@ function renderInventory() {
           <option value="완제품" ${i.category==='완제품'?'selected':''}>완제품</option>
         </select>
       </td>
-      <td><input type="number" value="${i.quantity}" style="width:70px" oninput="updateInventory(${idx},'quantity',this.value)" /></td>
-      <td><input type="text" value="${escapeHtml(i.unit)}" style="width:55px" oninput="updateInventory(${idx},'unit',this.value)" placeholder="kg/개" /></td>
-      <td><input type="number" value="${i.lowStockThreshold}" style="width:70px" oninput="updateInventory(${idx},'lowStockThreshold',this.value)" /></td>
-      <td><input type="date" value="${i.expiryDate}" oninput="updateInventory(${idx},'expiryDate',this.value)" /></td>
+      <td><input type="number" value="${i.quantity}" style="width:70px" onchange="updateInventory(${idx},'quantity',this.value)" /></td>
+      <td><input type="text" value="${escapeHtml(i.unit)}" style="width:55px" onchange="updateInventory(${idx},'unit',this.value)" placeholder="kg/개" /></td>
+      <td><input type="number" value="${i.lowStockThreshold}" style="width:70px" onchange="updateInventory(${idx},'lowStockThreshold',this.value)" /></td>
+      <td><input type="date" value="${i.expiryDate}" onchange="updateInventory(${idx},'expiryDate',this.value)" /></td>
       <td>
         ${isExpired ? '<span class="pill red">기한만료</span>' : isExpiring ? '<span class="pill orange">임박</span>' : ''}
         ${isLow ? '<span class="pill red">재고부족</span>' : ''}
@@ -1857,11 +1857,11 @@ function renderVendors() {
   const el = document.getElementById('tab-vendors');
   const rows = state.vendors.list.map((v, idx) => `
     <tr>
-      <td><input type="text" value="${escapeHtml(v.name)}" oninput="updateVendor(${idx},'name',this.value)" /></td>
-      <td><input type="text" value="${escapeHtml(v.contact)}" style="width:110px" oninput="updateVendor(${idx},'contact',this.value)" /></td>
-      <td><input type="text" value="${escapeHtml(v.items)}" oninput="updateVendor(${idx},'items',this.value)" placeholder="공급 품목" /></td>
-      <td><input type="text" value="${escapeHtml(v.unitPrice)}" style="width:100px" oninput="updateVendor(${idx},'unitPrice',this.value)" placeholder="예: kg당 12,000원" /></td>
-      <td><input type="text" value="${escapeHtml(v.note)}" oninput="updateVendor(${idx},'note',this.value)" /></td>
+      <td><input type="text" value="${escapeHtml(v.name)}" onchange="updateVendor(${idx},'name',this.value)" /></td>
+      <td><input type="text" value="${escapeHtml(v.contact)}" style="width:110px" onchange="updateVendor(${idx},'contact',this.value)" /></td>
+      <td><input type="text" value="${escapeHtml(v.items)}" onchange="updateVendor(${idx},'items',this.value)" placeholder="공급 품목" /></td>
+      <td><input type="text" value="${escapeHtml(v.unitPrice)}" style="width:100px" onchange="updateVendor(${idx},'unitPrice',this.value)" placeholder="예: kg당 12,000원" /></td>
+      <td><input type="text" value="${escapeHtml(v.note)}" onchange="updateVendor(${idx},'note',this.value)" /></td>
       <td><button class="btn danger sm" onclick="deleteVendor(${idx})">삭제</button></td>
     </tr>
   `).join('');
@@ -1904,23 +1904,23 @@ function renderMeetings() {
     return `
     <div class="recipe-card">
       <div class="recipe-head">
-        <input type="text" value="${escapeHtml(n.title)}" oninput="updateMeeting(${idx},'title',this.value)" placeholder="회의 제목" />
+        <input type="text" value="${escapeHtml(n.title)}" onchange="updateMeeting(${idx},'title',this.value)" placeholder="회의 제목" />
         <button class="btn danger sm" onclick="deleteMeeting(${idx})">삭제</button>
       </div>
       <div class="row">
         <div>
           <label class="field">날짜</label>
-          <input type="date" value="${n.date}" oninput="updateMeeting(${idx},'date',this.value)" />
+          <input type="date" value="${n.date}" onchange="updateMeeting(${idx},'date',this.value)" />
         </div>
         <div>
           <label class="field">참석자</label>
-          <input type="text" value="${escapeHtml(n.attendees)}" oninput="updateMeeting(${idx},'attendees',this.value)" placeholder="주희, 은비" />
+          <input type="text" value="${escapeHtml(n.attendees)}" onchange="updateMeeting(${idx},'attendees',this.value)" placeholder="주희, 은비" />
         </div>
       </div>
       <label class="field" style="margin-top:8px">내용</label>
-      <textarea rows="3" oninput="updateMeeting(${idx},'content',this.value)">${escapeHtml(n.content)}</textarea>
+      <textarea rows="3" onchange="updateMeeting(${idx},'content',this.value)">${escapeHtml(n.content)}</textarea>
       <label class="field" style="margin-top:8px">액션 아이템</label>
-      <textarea rows="2" oninput="updateMeeting(${idx},'actionItems',this.value)" placeholder="누가 무엇을 언제까지">${escapeHtml(n.actionItems)}</textarea>
+      <textarea rows="2" onchange="updateMeeting(${idx},'actionItems',this.value)" placeholder="누가 무엇을 언제까지">${escapeHtml(n.actionItems)}</textarea>
     </div>
     `;
   }).join('');
@@ -1954,7 +1954,7 @@ function renderIdeas() {
   const el = document.getElementById('tab-ideas');
   const rows = state.ideas.list.map((i, idx) => `
     <tr>
-      <td><input type="text" value="${escapeHtml(i.title)}" oninput="updateIdea(${idx},'title',this.value)" /></td>
+      <td><input type="text" value="${escapeHtml(i.title)}" onchange="updateIdea(${idx},'title',this.value)" /></td>
       <td>
         <select onchange="updateIdea(${idx},'status',this.value)">
           <option value="아이디어" ${i.status==='아이디어'?'selected':''}>아이디어</option>
@@ -1963,7 +1963,7 @@ function renderIdeas() {
           <option value="채택" ${i.status==='채택'?'selected':''}>채택</option>
         </select>
       </td>
-      <td><input type="text" value="${escapeHtml(i.note)}" oninput="updateIdea(${idx},'note',this.value)" /></td>
+      <td><input type="text" value="${escapeHtml(i.note)}" onchange="updateIdea(${idx},'note',this.value)" /></td>
       <td><button class="btn danger sm" onclick="deleteIdea(${idx})">삭제</button></td>
     </tr>
   `).join('');
@@ -2025,7 +2025,7 @@ function renderTax() {
         <div class="row">
           <div>
             <label class="field">업종별 부가가치율(%) — 홈택스에서 업종 확인</label>
-            <input type="number" value="${t.vatRate}" oninput="updateTax('vatRate', this.value)" />
+            <input type="number" value="${t.vatRate}" onchange="updateTax('vatRate', this.value)" />
           </div>
         </div>
         <div class="muted" style="margin-top:6px">계산: 연매출 × 부가가치율 × 10%</div>
@@ -2033,7 +2033,7 @@ function renderTax() {
         <div class="row">
           <div>
             <label class="field">연간 매입액(매입세액 계산용, 원)</label>
-            <input type="number" value="${t.purchaseAmount}" oninput="updateTax('purchaseAmount', this.value)" />
+            <input type="number" value="${t.purchaseAmount}" onchange="updateTax('purchaseAmount', this.value)" />
           </div>
         </div>
         <div class="muted" style="margin-top:6px">계산: (연매출 − 연매입) × 10%</div>
